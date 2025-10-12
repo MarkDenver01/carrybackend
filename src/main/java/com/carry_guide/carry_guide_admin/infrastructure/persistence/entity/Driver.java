@@ -50,8 +50,7 @@ public class Driver {
 
     @NotBlank
     @Size(max =50)
-    @NumberFormat(style = NumberFormat.Style.NUMBER)
-    @Column(name = "mobile_number")
+    @Column(name = "drivers_license_number")
     private String driversLicenseNumber;
 
     @Column(name = "front_id_url")
