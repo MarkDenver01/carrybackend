@@ -9,18 +9,18 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class SocialAuthenticationHandler extends SavedRequestAwareAuthenticationSuccessHandler {
-    @Autowired
-    private final UserService userService;
-
-    @Autowired
-    private final JwtUtils jwtUtils;
-
-    @Value("${base.url.backend}")
-    private String baseUrl;
-
-    String email;
-    String idAttributeKey;
-    @Autowired
-    private RoleRepository roleRepository;
+//    @Autowired
+//    private final UserService userService;
+//
+//    @Autowired
+//    private final JwtUtils jwtUtils;
+//
+//    @Value("${base.url.backend}")
+//    private String baseUrl;
+//
+//    String email;
+//    String idAttributeKey;
+//    @Autowired
+//    private RoleRepository roleRepository;
 
 }
