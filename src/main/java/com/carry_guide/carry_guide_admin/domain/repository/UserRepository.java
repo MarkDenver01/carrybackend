@@ -12,7 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
 
-    Optional<User> findByEmailAndDriver_DriversLicenseNumber(String email, Long driversLicenseId);
+    Optional<User> findByEmailAndDriver_DriversLicenseNumber(String email, String driversLicenseId);
 
     Boolean existsByEmail(String email);
 
