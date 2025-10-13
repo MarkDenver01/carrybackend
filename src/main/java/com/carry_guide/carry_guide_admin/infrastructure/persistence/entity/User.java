@@ -61,7 +61,6 @@ public class User {
     @JsonIgnore
     private Customer customer;
 
-
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
     private Driver driver;
