@@ -1,6 +1,6 @@
 package com.carry_guide.carry_guide_admin.infrastructure.security;
 
-import com.carry_guide.carry_guide_admin.application.service.CustomizedUserDetailsService;
+import com.carry_guide.carry_guide_admin.infrastructure.persistence.service.CustomizedUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
