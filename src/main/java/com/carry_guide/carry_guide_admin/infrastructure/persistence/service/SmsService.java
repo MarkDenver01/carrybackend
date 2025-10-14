@@ -32,30 +32,17 @@ public class SmsService {
                         Map.of(
                                 "from", senderName,
                                 "destinations", List.of(Map.of("to", mobileNumber)),
-                                "channels", List.of("VIBER", "SMS"),
-                                "viber", Map.of(
-                                        "text", text,
-                                        "validityPeriod", 300 // 5 minutes
-                                ),
-                                "sms", Map.of(
-                                        "text", text
-                                )
+                                "text", text
                         )
                 )
         );
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
-        if (apiKey.startsWith("App ")) {
-            headers.set("Authorization", apiKey);
-        } else {
-            headers.set("Authorization", "App " + apiKey);
-        }
-
+        headers.set("Authorization", "App " + apiKey);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-        String url = baseUrl + "/omni/1/advanced";
+        String url = baseUrl + "/sms/2/text/advanced";
 
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
