@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Getter
 public class TwilioConfig {
     @Value("${twilio.accountSID}")
     private String accountSid;
