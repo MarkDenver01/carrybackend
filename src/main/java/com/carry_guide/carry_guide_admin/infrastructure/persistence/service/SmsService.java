@@ -32,12 +32,13 @@ public class SmsService {
                         Map.of(
                                 "from", senderName,
                                 "destinations", List.of(Map.of("to", mobileNumber)),
-                                "channel", "VIBER",
-                                "content", Map.of("text", text),
-                                "failover", Map.of(
-                                        "from", senderName,
-                                        "channel", "SMS",
-                                        "content", Map.of("text", text)
+                                "channels", List.of("VIBER", "SMS"),
+                                "viber", Map.of(
+                                        "text", text,
+                                        "validityPeriod", 300 // 5 minutes
+                                ),
+                                "sms", Map.of(
+                                        "text", text
                                 )
                         )
                 )
@@ -49,12 +50,12 @@ public class SmsService {
         if (apiKey.startsWith("App ")) {
             headers.set("Authorization", apiKey);
         } else {
-            headers.setBearerAuth(apiKey);
+            headers.set("Authorization", "App " + apiKey);
         }
 
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-        String url = baseUrl + "/messages";
+        String url = baseUrl + "/omni/1/advanced";
 
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
