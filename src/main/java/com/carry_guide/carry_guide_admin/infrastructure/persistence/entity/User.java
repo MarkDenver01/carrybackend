@@ -32,7 +32,6 @@ public class User {
     @Column(name = "email")
     private String email;
 
-    @NotBlank
     @Size(max = 11)
     @Column(name = "mobile_number")
     private String mobileNumber;

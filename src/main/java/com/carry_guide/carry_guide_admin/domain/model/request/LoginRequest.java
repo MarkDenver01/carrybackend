@@ -11,7 +11,7 @@ public class LoginRequest {
     private String password;
     private String role;
     private String email;
-    @NotBlank(message = "Mobile number is required")
+
     @Size(min = 10, max = 13, message = "Mobile number must be between 10 and 13 characters")
     @Pattern(regexp = "^[+0-9]+$", message = "Invalid mobile number format")
     private String mobileNumber;

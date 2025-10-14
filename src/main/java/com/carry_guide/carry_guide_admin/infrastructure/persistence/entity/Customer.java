@@ -36,7 +36,6 @@ public class Customer {
     @Column(name = "address")
     private String address;
 
-    @NotBlank
     @Size(max =50)
     @Column(name = "mobile_number")
     private String mobileNumber;
