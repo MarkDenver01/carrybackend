@@ -1,8 +1,11 @@
 package com.carry_guide.carry_guide_admin.infrastructure.config;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@Getter
 @Configuration
 public class TwilioConfig {
     @Value("${twilio.accountSID}")
@@ -13,16 +16,4 @@ public class TwilioConfig {
 
     @Value("${twilio.fromNumber}")
     private String fromNumber;
-
-    public String getAccountSid() {
-        return accountSid;
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public String getFromNumber() {
-        return fromNumber;
-    }
 }
