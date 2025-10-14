@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface JpaUserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByMobileNumber(int mobileNumber);
 
     Optional<User> findByEmailAndDriver_DriversLicenseNumber(String email, String driversLicenseId);
 

@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class UserService implements UserDomainService {
@@ -38,10 +40,36 @@ public class UserService implements UserDomainService {
     EmailService emailService;
 
     @Autowired
+    OtpCacheService otpCacheService;
+
+    @Autowired
+    SmsService smsService;
+
+    @Autowired
     JwtUtils jwtUtils;
 
     @Override
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public void requestOtp(String mobileNumber) throws Exception {
+        String otp = generateOtp();
+        otpCacheService.put(mobileNumber, otp);
+        smsService.sendOtp(mobileNumber, otp);
+    }
+
+    @Override
+    public boolean verifyOtp(String mobileNumber, String otp) throws Exception {
+        String saved = otpCacheService.get(mobileNumber);
+        if (saved == null || !saved.equals(otp)) { return  false; }
+        otpCacheService.invalidate(mobileNumber);
+        return true;
+    }
+
+    private String generateOtp() {
+        int n = new Random().nextInt(1_000_000);
+        return String.format("%06d", n);
     }
 }

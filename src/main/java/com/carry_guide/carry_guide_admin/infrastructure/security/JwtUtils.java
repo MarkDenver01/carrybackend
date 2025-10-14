@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.infrastructure.security;
 
+import com.carry_guide.carry_guide_admin.infrastructure.persistence.service.CustomizedUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
