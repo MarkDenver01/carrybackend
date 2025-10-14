@@ -65,10 +65,16 @@
 <!--			<artifactId>infobip-api-java-client</artifactId>-->
 <!--			<version>6.1.1</version>-->
 <!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.github.ben-manes.caffeine</groupId>-->
+<!--			<artifactId>caffeine</artifactId>-->
+<!--			<version>3.1.8</version>-->
+<!--		</dependency>-->
+		<!-- Twilio SDK -->
 		<dependency>
-			<groupId>com.github.ben-manes.caffeine</groupId>
-			<artifactId>caffeine</artifactId>
-			<version>3.1.8</version>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>9.13.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>

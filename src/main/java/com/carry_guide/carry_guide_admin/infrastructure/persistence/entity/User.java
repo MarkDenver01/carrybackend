@@ -43,8 +43,7 @@ public class User {
 
     private String signupMethod;
 
-    private String oneTimePassword;
-    private Long otpExpiry;
+    private boolean verified;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "role_id", referencedColumnName = "role_id")

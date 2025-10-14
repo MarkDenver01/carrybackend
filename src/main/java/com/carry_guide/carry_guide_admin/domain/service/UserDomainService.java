@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface UserDomainService {
     Optional<User> findByEmail(String email);
 
-    void requestOtp(String mobileNumber) throws Exception;
+    String requestOtp(String mobileNumber);
 
-    boolean verifyOtp(String mobileNumber, String otp) throws Exception;
+    boolean verifyOtp(String mobileNumber, String otp);
 }

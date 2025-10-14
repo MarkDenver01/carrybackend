@@ -120,6 +120,7 @@ public class ApiController {
                     verifyRequest.getOtp());
 
             if (success) {
+                String jwtToken = jwtUtils.generateMobileToken(verifyRequest.getMobileNumber());
                 return ResponseEntity.ok("Success");
             } else {
                 return ResponseEntity.badRequest().body("Invalid or expired verification code");

@@ -62,6 +62,16 @@ public class JwtUtils {
                 .compact();
     }
 
+    public String generateMobileToken(String mobileNumber) {
+        return Jwts.builder()
+                .subject(mobileNumber)
+                .claim("type", "MOBILE")
+                .issuedAt(new Date())
+                .expiration(new Date((new Date()).getTime() + expirationMs))
+                .signWith(getSecretKeyProvider())
+                .compact();
+    }
+
     public String getEmailFromJwtToken(String token) {
         return Jwts.parser()
                 .verifyWith((SecretKey) getSecretKeyProvider())
@@ -69,6 +79,24 @@ public class JwtUtils {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    public String getMobileFromJwtToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith((SecretKey) getSecretKeyProvider())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            if ("MOBILE".equals(claims.get("type"))) {
+                return claims.getSubject(); // mobile number
+            }
+            return null;
+        } catch (JwtException e) {
+            logger.error("Failed to extract mobile number: {}", e.getMessage());
+            return null;
+        }
     }
 
     private Key getSecretKeyProvider() {

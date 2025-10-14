@@ -10,6 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -40,13 +43,13 @@ public class UserService implements UserDomainService {
     EmailService emailService;
 
     @Autowired
-    OtpCacheService otpCacheService;
-
-    @Autowired
     SmsService smsService;
 
     @Autowired
     JwtUtils jwtUtils;
+
+    private final Map<String, String> otpStorage = new HashMap<>();
+    private final Map<String, LocalDateTime> otpExpiry = new HashMap<>();
 
     @Override
     public Optional<User> findByEmail(String email) {
@@ -54,22 +57,40 @@ public class UserService implements UserDomainService {
     }
 
     @Override
-    public void requestOtp(String mobileNumber) throws Exception {
-        String otp = generateOtp();
-        otpCacheService.put(mobileNumber, otp);
-        smsService.sendOtp(mobileNumber, otp);
+    public String requestOtp(String mobileNumber) {
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        otpStorage.put(mobileNumber, otp);
+        otpExpiry.put(mobileNumber, LocalDateTime.now().plusMinutes(5));
+
+        smsService.sendSms(mobileNumber, "Your verification code is: " + otp);
+        return "Verification code sent to: " + mobileNumber;
     }
 
     @Override
-    public boolean verifyOtp(String mobileNumber, String otp) throws Exception {
-        String saved = otpCacheService.get(mobileNumber);
-        if (saved == null || !saved.equals(otp)) { return  false; }
-        otpCacheService.invalidate(mobileNumber);
-        return true;
-    }
+    public boolean verifyOtp(String mobileNumber, String otp){
+        if (!otpStorage.containsKey(mobileNumber)) return false;
 
-    private String generateOtp() {
-        int n = new Random().nextInt(1_000_000);
-        return String.format("%06d", n);
+        if (LocalDateTime.now().isAfter(otpExpiry.get(mobileNumber))) {
+            otpStorage.remove(mobileNumber);
+            return false; // expired
+        }
+
+
+        if (otpStorage.get(mobileNumber).equals(otp)) {
+            otpStorage.remove(mobileNumber);
+            otpExpiry.remove(mobileNumber);
+
+            // Create or verify user
+            User user = userRepository.findByMobileNumber(mobileNumber)
+                    .orElseGet(() -> {
+                        User newUser = new User();
+                        newUser.setMobileNumber(mobileNumber);
+                        return newUser;
+                    });
+            user.setVerified(true);
+            userRepository.save(user);
+            return true;
+        }
+        return false;
     }
 }
