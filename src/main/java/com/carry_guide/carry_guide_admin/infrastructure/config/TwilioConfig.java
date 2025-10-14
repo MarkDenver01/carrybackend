@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Getter
 public class TwilioConfig {
-    @Value("${TWILIO_ACCOUNT_SID}")
+    @Value("${twilio.accountSID}")
     private String accountSid;
 
-    @Value("${TWILIO_AUTH_TOKEN}")
+    @Value("${twilio.authToken}")
     private String authToken;
 
     @Value("${twilio.fromNumber}")
