@@ -1,22 +1,35 @@
 package com.carry_guide.carry_guide_admin.infrastructure.persistence.service;
 
-import com.carry_guide.carry_guide_admin.infrastructure.config.TwilioConfig;
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 @Service
 public class SmsService {
 
-    @Autowired
-    TwilioConfig twilioConfig;
-    public void sendSms(String mobileNumber, String message) {
-        Message.creator(
-                new PhoneNumber(mobileNumber),
-                new PhoneNumber(twilioConfig.getFromNumber()),
-                message
-        ).create();
+    @Value("${mocean.apiKey}")
+    private String apiKey;
+
+    @Value("${mocean.fromNumber}")
+    private String fromNumber;
+
+    private final WebClient webClient = WebClient.builder()
+            .baseUrl("https://rest.moceanapi.com")
+            .defaultHeader("Authorization", "Bearer " + apiKey)
+            .build();
+
+    public Mono<String> sendOtp(String toNumber, String otp) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/rest/2/sms")
+                        .queryParam("mocean-from", fromNumber)
+                        .queryParam("mocean-to", toNumber)
+                        .queryParam("mocean-text", "Your OTP is: " + otp)
+                        .build())
+                .retrieve()
+                .bodyToMono(String.class);
     }
+
+
 }
