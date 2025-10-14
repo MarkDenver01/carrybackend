@@ -12,12 +12,6 @@ public class SmsService {
 
     @Autowired
     TwilioConfig twilioConfig;
-
-    @PostConstruct
-    public void initTwilio() {
-        Twilio.init(twilioConfig.getAccountSid(), twilioConfig.getAuthToken());
-    }
-
     public void sendSms(String mobileNumber, String message) {
         Message.creator(
                 new PhoneNumber(mobileNumber),
