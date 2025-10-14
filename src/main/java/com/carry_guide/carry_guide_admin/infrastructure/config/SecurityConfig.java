@@ -83,6 +83,7 @@ public class SecurityConfig {
                         passwordEncoder.encode("admin"));
                 user.setSignupMethod("email");
                 user.setRole(adminRole);
+                user.setMobileNumber("09621531667");
                 userRepository.save(user);
             }
         };
