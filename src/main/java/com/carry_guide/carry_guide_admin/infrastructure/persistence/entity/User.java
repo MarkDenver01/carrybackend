@@ -37,9 +37,8 @@ public class User {
 
     @NotBlank
     @Size(max = 11)
-    @NumberFormat(style = NumberFormat.Style.NUMBER)
     @Column(name = "mobile_number")
-    private int mobileNumber;
+    private String mobileNumber;
 
     @Size(max = 120)
     @Column(name = "password")
@@ -68,26 +67,4 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
     private Driver driver;
-
-    public User(String userName, int mobileNumber, String password) {
-        this.userName = userName;
-        this.mobileNumber = mobileNumber;
-        this.password = password;
-    }
-
-    public User(String userName, String email, String password) {
-        this.userName = userName;
-        this.email = email;
-        this.password = password;
-    }
-
-    public User(String userName, String email) {
-        this.userName = userName;
-        this.email = email;
-    }
-
-    public User(String userName, int mobileNumber) {
-        this.userName = userName;
-        this.mobileNumber = mobileNumber;
-    }
 }

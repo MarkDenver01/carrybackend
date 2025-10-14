@@ -38,9 +38,8 @@ public class Customer {
 
     @NotBlank
     @Size(max =50)
-    @NumberFormat(style = NumberFormat.Style.NUMBER)
     @Column(name = "mobile_number")
-    private int mobileNumber;
+    private String mobileNumber;
 
     @NotBlank
     @Size(max =50)
