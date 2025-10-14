@@ -111,7 +111,6 @@ public class SecurityConfig {
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
-                        .requestMatchers("/user/api/**").authenticated()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated())
 
