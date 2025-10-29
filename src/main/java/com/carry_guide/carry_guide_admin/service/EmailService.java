@@ -1,0 +1,26 @@
+package com.carry_guide.carry_guide_admin.service;
+
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailService {
+
+   // @Autowired
+    //private JavaMailSender mailSender;
+
+    public void sendPasswordResetEmail(String to, String resetUrl) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Password Reset");
+        message.setText("Reset your password here: " + resetUrl);
+      //  mailSender.send(message);
+    }
+    public void sendEmail(String to, String subject, String userName) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText("Hello " + userName + ", \n\nYour account has been verified.\n" +
+                "You can have now the rights to logged in.");
+    }
+}

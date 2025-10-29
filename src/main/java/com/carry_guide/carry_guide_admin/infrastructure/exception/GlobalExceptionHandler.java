@@ -1,6 +1,6 @@
 package com.carry_guide.carry_guide_admin.infrastructure.exception;
 
-import com.carry_guide.carry_guide_admin.domain.model.response.MessageResponse;
+import com.carry_guide.carry_guide_admin.dto.response.MessageResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

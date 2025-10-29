@@ -1,14 +1,14 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
-import com.carry_guide.carry_guide_admin.domain.model.request.LoginRequest;
-import com.carry_guide.carry_guide_admin.domain.model.request.MobileLoginRequest;
-import com.carry_guide.carry_guide_admin.domain.model.request.VerifyRequest;
-import com.carry_guide.carry_guide_admin.domain.model.response.AdminResponse;
-import com.carry_guide.carry_guide_admin.domain.model.response.LoginResponse;
-import com.carry_guide.carry_guide_admin.infrastructure.persistence.entity.User;
-import com.carry_guide.carry_guide_admin.infrastructure.persistence.service.CustomizedUserDetails;
-import com.carry_guide.carry_guide_admin.infrastructure.persistence.service.UserService;
+import com.carry_guide.carry_guide_admin.dto.request.LoginRequest;
+import com.carry_guide.carry_guide_admin.dto.request.MobileLoginRequest;
+import com.carry_guide.carry_guide_admin.dto.request.VerifyRequest;
+import com.carry_guide.carry_guide_admin.dto.response.AdminResponse;
+import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
+import com.carry_guide.carry_guide_admin.service.CustomizedUserDetails;
+import com.carry_guide.carry_guide_admin.service.UserService;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
+import com.carry_guide.carry_guide_admin.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -1,10 +1,10 @@
 package com.carry_guide.carry_guide_admin.infrastructure.config;
 
-import com.carry_guide.carry_guide_admin.domain.enums.RoleState;
-import com.carry_guide.carry_guide_admin.domain.repository.JpaRoleRepository;
-import com.carry_guide.carry_guide_admin.domain.repository.JpaUserRepository;
-import com.carry_guide.carry_guide_admin.infrastructure.persistence.entity.Role;
-import com.carry_guide.carry_guide_admin.infrastructure.persistence.entity.User;
+import com.carry_guide.carry_guide_admin.dto.enums.RoleState;
+import com.carry_guide.carry_guide_admin.model.entity.Role;
+import com.carry_guide.carry_guide_admin.model.entity.User;
+import com.carry_guide.carry_guide_admin.repository.JpaRoleRepository;
+import com.carry_guide.carry_guide_admin.repository.JpaUserRepository;
 import com.carry_guide.carry_guide_admin.infrastructure.security.AuthEntryPoint;
 import com.carry_guide.carry_guide_admin.infrastructure.security.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
