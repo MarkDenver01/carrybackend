@@ -42,9 +42,6 @@ public class UserService implements UserDomainService {
     EmailService emailService;
 
     @Autowired
-    SmsService smsService;
-
-    @Autowired
     JwtUtils jwtUtils;
 
     private final Map<String, String> otpStorage = new HashMap<>();
