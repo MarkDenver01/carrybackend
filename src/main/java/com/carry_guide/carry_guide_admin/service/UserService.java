@@ -58,7 +58,6 @@ public class UserService implements UserDomainService {
         otpStorage.put(mobileNumber, otp);
         otpExpiry.put(mobileNumber, LocalDateTime.now().plusMinutes(5));
 
-        smsService.sendOtp(mobileNumber, otp);
         return "Verification code sent to: " + mobileNumber;
     }
 
