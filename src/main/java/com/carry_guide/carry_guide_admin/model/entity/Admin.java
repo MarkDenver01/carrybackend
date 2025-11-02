@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -42,11 +43,14 @@ public class Admin {
             pattern = "MMM dd, yyyy hh:mm a",
             timezone = "Asia/Manila" // or GMT+8
     )
-    private LocalDate createdDate;
+    private LocalDateTime createdDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status", length = 20)
     private AccountStatus accountStatus;
+
+    @Column(name = "profile_url")
+    private String profileUrl;
 
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")

@@ -12,4 +12,5 @@ public class AdminResponse {
     private String userName;
     private String email;
     private String createdDate;
+    private String profileUrl;
 }

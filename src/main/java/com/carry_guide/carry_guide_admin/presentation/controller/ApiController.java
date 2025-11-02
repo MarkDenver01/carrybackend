@@ -90,7 +90,8 @@ public class ApiController {
                         user.getAdmin().getAdminId(),
                         user.getAdmin().getUserName(),
                         user.getAdmin().getEmail(),
-                        String.valueOf(user.getAdmin().getCreatedDate())
+                        String.valueOf(user.getAdmin().getCreatedDate()),
+                        user.getAdmin().getProfileUrl()
                 );
             }
 

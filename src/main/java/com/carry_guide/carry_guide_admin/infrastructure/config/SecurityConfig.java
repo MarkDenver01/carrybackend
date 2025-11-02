@@ -1,17 +1,19 @@
 package com.carry_guide.carry_guide_admin.infrastructure.config;
 
+import com.carry_guide.carry_guide_admin.dto.enums.AccountStatus;
 import com.carry_guide.carry_guide_admin.dto.enums.RoleState;
+import com.carry_guide.carry_guide_admin.model.entity.Admin;
 import com.carry_guide.carry_guide_admin.model.entity.Role;
 import com.carry_guide.carry_guide_admin.model.entity.User;
+import com.carry_guide.carry_guide_admin.repository.JpaAdminRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaRoleRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserRepository;
 import com.carry_guide.carry_guide_admin.infrastructure.security.AuthEntryPoint;
 import com.carry_guide.carry_guide_admin.infrastructure.security.AuthTokenFilter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -25,19 +27,26 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.time.LocalDateTime;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
-    @Autowired
-    private AuthEntryPoint unAuthorizedHandler;
 
-    @Autowired
-    @Lazy
-    private SocialAuthenticationHandler authorizedHandler;
+    private final AuthEntryPoint unAuthorizedHandler;
+    private final SocialAuthenticationHandler authorizedHandler;
+    private final CorsConfig corsConfig;
 
-    @Autowired
-    private CorsConfig corsConfig;
+    public SecurityConfig(
+            AuthEntryPoint unAuthorizedHandler,
+            @Lazy SocialAuthenticationHandler authorizedHandler,
+            CorsConfig corsConfig
+    ) {
+        this.unAuthorizedHandler = unAuthorizedHandler;
+        this.authorizedHandler = authorizedHandler;
+        this.corsConfig = corsConfig;
+    }
 
     /**
      * Filter to handle JWT token in request header.
@@ -70,6 +79,7 @@ public class SecurityConfig {
     public CommandLineRunner init(
             JpaRoleRepository roleRepository,
             JpaUserRepository userRepository,
+            JpaAdminRepository adminRepository,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
@@ -85,6 +95,21 @@ public class SecurityConfig {
                 user.setRole(adminRole);
                 user.setMobileNumber("09621531667");
                 userRepository.save(user);
+
+                Admin admin = new Admin();
+                admin.setUserName(user.getUserName());
+                admin.setEmail(user.getEmail());
+                admin.setAccountStatus(AccountStatus.VERIFIED);
+
+                // LocalDate -> LocalDateTime change handled here
+                admin.setCreatedDate(LocalDateTime.now());
+
+                // profileUrl column exists now; set to null or a default if desired
+                admin.setProfileUrl(null);
+
+                admin.setUser(user);
+
+                adminRepository.save(admin);
             }
         };
     }
@@ -95,11 +120,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CSRF protection except for these endpoints
-//                .csrf(csrf -> csrf
-//                        .ignoringRequestMatchers("/user/public/login", "/user/public/register")
-//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-                .csrf(csrf -> csrf.disable()) // disable csrf (recommended for APIs with JWT)
+                // Disable CSRF for stateless JWT APIs (if you have endpoints that need CSRF, re-enable accordingly)
+                .csrf(csrf -> csrf.disable())
 
                 // Enable CORS with custom configuration
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
@@ -115,7 +137,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated())
 
-                // OAuth2 login handling
+                // OAuth2 login handling (success handler provided)
                 .oauth2Login(oauth -> oauth.successHandler(authorizedHandler))
 
                 // Exception handling (unauthorized access)
@@ -124,11 +146,10 @@ public class SecurityConfig {
                 // Add JWT token filter before the username/password filter
                 .addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class)
 
-                // configures Spring Security to not use HTTP sessions at all.
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Make session stateless
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Enable form login and basic auth
+                // Enable form login and basic auth (optional)
                 .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults());
 
