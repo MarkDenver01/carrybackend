@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.infrastructure.security;
 
+import com.carry_guide.carry_guide_admin.model.entity.User;
 import com.carry_guide.carry_guide_admin.service.CustomizedUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -52,13 +53,14 @@ public class JwtUtils {
                 .compact();
     }
 
-    public String generateToken(String email, String role) {
+    public String generateToken(User user) {
         return Jwts.builder()
-                .subject(email)
-                .claim("roles", role)
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + expirationMs))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .setSubject(user.getEmail() != null ? user.getEmail() : user.getMobileNumber())
+                .claim("role", user.getRole().getRoleState().name())
+                .claim("userId", user.getUserId())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(SignatureAlgorithm.HS512, getSecretKeyProvider())
                 .compact();
     }
 

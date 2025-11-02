@@ -87,10 +87,10 @@ public class SecurityConfig {
                     .orElseGet(() -> roleRepository.save(new Role(RoleState.ADMIN)));
 
             if (!userRepository.existsByEmail("wrapandcarry@admin.com")) {
-                User user = new User(
-                        "Administrator",
-                        "wrapandcarry@admin.com",
-                        passwordEncoder.encode("admin"));
+                User user = new User();
+                user.setUserName("Administrator");
+                user.setEmail("wrapandcarry@admnin.com");
+                user.setPassword(passwordEncoder.encode("admin"));
                 user.setSignupMethod("email");
                 user.setRole(adminRole);
                 user.setMobileNumber("09621531667");

@@ -30,7 +30,13 @@ public class OtpVerification {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
+
 

@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
+@Data
+@NoArgsConstructor
 @Table(name = "user_account", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"email"}),
         @UniqueConstraint(columnNames = {"mobile_number"})
