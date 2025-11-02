@@ -134,7 +134,10 @@ public class SecurityConfig {
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers("/driver/**").hasRole("RIDER")
                         .anyRequest().authenticated())
 
                 // OAuth2 login handling (success handler provided)
