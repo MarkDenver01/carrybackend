@@ -52,7 +52,7 @@ public class Admin {
     @Column(name = "profile_url")
     private String profileUrl;
 
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
