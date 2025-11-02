@@ -8,63 +8,26 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
-@Data
-@NoArgsConstructor
-@Table(name = "user_account",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "email")
-        })
+@Table(name = "user_account", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"email"}),
+        @UniqueConstraint(columnNames = {"mobile_number"})
+})
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @NotBlank
-    @Size(max = 20)
-    @Column(name = "username")
     private String userName;
-
-    @NotBlank
-    @Size(max = 50)
-    @Email
-    @Column(name = "email")
     private String email;
-
-    @Size(max = 11)
-    @Column(name = "mobile_number")
     private String mobileNumber;
-
-    @Size(max = 120)
-    @Column(name = "password")
-    @JsonIgnore
     private String password;
-
-    private String signupMethod;
-
+    private String signupMethod; // "EMAIL" or "MOBILE_OTP"
     private boolean verified;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
-    @JoinColumn(name = "role_id", referencedColumnName = "role_id")
-    @JsonIgnore
-    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
     private Role role;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Admin admin;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Customer customer;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Driver driver;
-
-    public User(String userName, String email, String password) {
-        this.userName = userName;
-        this.email = email;
-        this.password = password;
-    }
+    @OneToOne(mappedBy = "user") private Admin admin;
+    @OneToOne(mappedBy = "user") private Customer customer;
+    @OneToOne(mappedBy = "user") private Driver driver;
 }

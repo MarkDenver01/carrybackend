@@ -13,44 +13,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
 @Table(name = "price")
 public class Price {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "price_id")
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int priceId;
 
-    @NotNull
-    @DecimalMin(value = "0.00")
-    @Column(name = "base_price", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-    @Column(name = "effective_date")
-    private LocalDateTime effectiveDate = LocalDateTime.now();
+    private LocalDateTime effectiveDate;
 
-    // Relationships
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", unique = true)
+    @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_recommended_id", unique = true)
-    private ProductRecommended productRecommended;
-
-    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL)
     private List<Discount> discounts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PriceHistory> history = new ArrayList<>();
-
-    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL)
     private List<Tax> taxes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL)
     private List<Coupon> coupons = new ArrayList<>();
 
+    @OneToMany(mappedBy = "price", cascade = CascadeType.ALL)
+    private List<PriceHistory> history = new ArrayList<>();
 }
