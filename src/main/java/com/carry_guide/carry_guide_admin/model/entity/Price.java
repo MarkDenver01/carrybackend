@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Data
+@NoArgsConstructor
 @Table(name = "price")
 public class Price {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
