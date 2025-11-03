@@ -60,7 +60,7 @@ public class JwtUtils {
                 .claim("userId", user.getUserId())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(SignatureAlgorithm.HS512, getSecretKeyProvider())
+                .signWith(getSecretKeyProvider())
                 .compact();
     }
 

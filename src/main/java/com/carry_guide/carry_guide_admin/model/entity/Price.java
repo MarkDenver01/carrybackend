@@ -40,4 +40,8 @@ public class Price {
 
     @OneToMany(mappedBy = "price", cascade = CascadeType.ALL)
     private List<PriceHistory> history = new ArrayList<>();
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_recommended_id")
+    private ProductRecommended productRecommended;
 }
