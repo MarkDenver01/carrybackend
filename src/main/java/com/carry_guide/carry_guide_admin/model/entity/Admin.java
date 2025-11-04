@@ -1,6 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
-import com.carry_guide.carry_guide_admin.dto.enums.AccountStatus;
+import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity

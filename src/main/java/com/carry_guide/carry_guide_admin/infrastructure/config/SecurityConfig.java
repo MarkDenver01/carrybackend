@@ -1,7 +1,7 @@
 package com.carry_guide.carry_guide_admin.infrastructure.config;
 
-import com.carry_guide.carry_guide_admin.dto.enums.AccountStatus;
-import com.carry_guide.carry_guide_admin.dto.enums.RoleState;
+import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
+import com.carry_guide.carry_guide_admin.domain.enums.RoleState;
 import com.carry_guide.carry_guide_admin.model.entity.Admin;
 import com.carry_guide.carry_guide_admin.model.entity.Role;
 import com.carry_guide.carry_guide_admin.model.entity.User;

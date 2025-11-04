@@ -1,6 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
-import com.carry_guide.carry_guide_admin.dto.enums.AccountStatus;
+import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

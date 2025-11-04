@@ -32,7 +32,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequestMapping("/user")
-public class ApiController {
+public class AuthController {
 
     @Autowired
     AuthenticationManager authenticationManager;

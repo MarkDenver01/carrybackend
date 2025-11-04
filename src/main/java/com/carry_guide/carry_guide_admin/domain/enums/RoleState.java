@@ -1,4 +1,4 @@
-package com.carry_guide.carry_guide_admin.dto.enums;
+package com.carry_guide.carry_guide_admin.domain.enums;
 
 public enum RoleState {
     ADMIN,

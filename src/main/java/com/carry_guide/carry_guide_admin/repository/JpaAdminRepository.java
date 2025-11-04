@@ -1,6 +1,6 @@
 package com.carry_guide.carry_guide_admin.repository;
 
-import com.carry_guide.carry_guide_admin.dto.enums.AccountStatus;
+import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
 import com.carry_guide.carry_guide_admin.model.entity.Admin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -20,7 +21,7 @@ public class ProductRecommended {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_recommended_id")
-    private int productRecommendedId;
+    private Long productRecommendedId;
 
     @NotBlank
     @Size(max = 50)
@@ -60,5 +61,6 @@ public class ProductRecommended {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonBackReference
     private Product product;
 }

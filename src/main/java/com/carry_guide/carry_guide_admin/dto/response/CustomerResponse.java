@@ -1,6 +1,5 @@
 package com.carry_guide.carry_guide_admin.dto.response;
 
-import com.carry_guide.carry_guide_admin.dto.enums.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

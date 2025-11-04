@@ -1,6 +1,7 @@
 package com.carry_guide.carry_guide_admin.utils;
 
-import com.carry_guide.carry_guide_admin.dto.enums.RoleState;
+
+import com.carry_guide.carry_guide_admin.domain.enums.RoleState;
 
 import java.util.Map;
 

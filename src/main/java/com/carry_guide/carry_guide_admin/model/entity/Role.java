@@ -1,6 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
-import com.carry_guide.carry_guide_admin.dto.enums.RoleState;
+import com.carry_guide.carry_guide_admin.domain.enums.RoleState;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

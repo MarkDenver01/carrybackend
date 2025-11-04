@@ -1,10 +1,7 @@
 package com.carry_guide.carry_guide_admin.service;
 
-import com.carry_guide.carry_guide_admin.dto.response.DriverResponse;
 import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
-import com.carry_guide.carry_guide_admin.dto.service.UserDomainService;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
-import com.carry_guide.carry_guide_admin.model.entity.Driver;
 import com.carry_guide.carry_guide_admin.model.entity.Role;
 import com.carry_guide.carry_guide_admin.model.entity.User;
 import com.carry_guide.carry_guide_admin.repository.*;
@@ -19,7 +16,7 @@ import java.util.*;
 import static com.carry_guide.carry_guide_admin.utils.Utility.getRoleState;
 
 @Service
-public class UserService implements UserDomainService {
+public class UserService  {
     @Value("${base.url.react}")
     String baseUrl;
 
@@ -53,17 +50,14 @@ public class UserService implements UserDomainService {
     private final Map<String, String> otpStorage = new HashMap<>();
     private final Map<String, LocalDateTime> otpExpiry = new HashMap<>();
 
-    @Override
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    @Override
     public void sendOtp(String mobileNumber) {
         otpService.sendOtp(mobileNumber);
     }
 
-    @Override
     public LoginResponse verifyOtpAndGenerateToken(String mobileNumber, String otpCode, String userRole) {
         boolean verified = otpService.verifyOtp(mobileNumber, otpCode);
         if (!verified) {
