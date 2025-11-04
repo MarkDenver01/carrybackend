@@ -29,7 +29,9 @@ public class JwtUtils {
     @Value("${spring.app.jwtExpirationMs}")
     private int expirationMs;
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+    }
 
     public String getBearerToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -39,29 +41,43 @@ public class JwtUtils {
         return null;
     }
 
-    public String generateToken(CustomizedUserDetails customizedUserDetails) {
+    public JwtResponse generateToken(CustomizedUserDetails customizedUserDetails) {
         String email = customizedUserDetails.getEmail();
         String roles = customizedUserDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        return Jwts.builder()
+
+        Date issuedAt = new Date();
+        Date expirationDate = new Date(issuedAt.getTime() + expirationMs);
+
+        String token = Jwts.builder()
                 .subject(email)
                 .claim("roles", roles)
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + expirationMs))
-                .signWith(getSecretKeyProvider())
+                .issuedAt(issuedAt)
+                .expiration(expirationDate)
+                .signWith(getSecretKey())
                 .compact();
+
+        return new JwtResponse(token, issuedAt, expirationDate);
     }
 
-    public String generateToken(User user) {
-        return Jwts.builder()
-                .setSubject(user.getEmail() != null ? user.getEmail() : user.getMobileNumber())
-                .claim("role", user.getRole().getRoleState().name())
-                .claim("userId", user.getUserId())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(getSecretKeyProvider())
-                .compact();
+    public Date getExpirationDateFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration();
+    }
+
+
+    public String getEmailFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     public String generateMobileToken(String mobileNumber) {
@@ -70,59 +86,36 @@ public class JwtUtils {
                 .claim("type", "MOBILE")
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + expirationMs))
-                .signWith(getSecretKeyProvider())
+                .signWith(getSecretKey())
                 .compact();
     }
 
-    public String getEmailFromJwtToken(String token) {
-        return Jwts.parser()
-                .verifyWith((SecretKey) getSecretKeyProvider())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+    public long getRemainingValidity(String token) {
+        Date now = new Date();
+        Date expiration = getExpirationDateFromToken(token);
+        long remainingMs = expiration.getTime() - now.getTime();
+        return Math.max(remainingMs / 1000, 0);
     }
 
-    public String getMobileFromJwtToken(String token) {
+    public boolean validateToken(String token) {
         try {
             Claims claims = Jwts.parser()
-                    .verifyWith((SecretKey) getSecretKeyProvider())
+                    .verifyWith(getSecretKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
 
-            if ("MOBILE".equals(claims.get("type"))) {
-                return claims.getSubject(); // mobile number
-            }
-            return null;
-        } catch (JwtException e) {
-            logger.error("Failed to extract mobile number: {}", e.getMessage());
-            return null;
+            return !claims.getExpiration().before(new Date());
+        } catch (JwtException | IllegalArgumentException e) {
+            logger.error("Invalid JWT: {}", e.getMessage());
+            return false;
         }
     }
 
-    private Key getSecretKeyProvider() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(secret));
-    }
-
-    public boolean validateJwtToken(String token) {
-        try {
-            Jwts
-                    .parser()
-                    .verifyWith((SecretKey) getSecretKeyProvider())
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            logger.error("Expired JWT token: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            logger.error("Unsupported JWT token: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
-        }
-        return false;
-    }
+    public static record JwtResponse(
+            String token,
+            Date issuedAt,
+            Date expiresAt
+    ) {}
 
 }

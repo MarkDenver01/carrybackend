@@ -109,11 +109,11 @@ public class SocialAuthenticationHandler extends SavedRequestAwareAuthentication
                 authorities);
 
         // generate jwt token
-        String jwtToken = jwtUtils.generateToken(userDetails);
+        JwtUtils.JwtResponse jwtToken = jwtUtils.generateToken(userDetails);
 
         // redirect to the base url with the jwt token
         String targetUrl = UriComponentsBuilder.fromUriString(baseUrl + "/oauth2/redirect")
-                .queryParam("token", jwtToken)
+                .queryParam("token", jwtToken.token())
                 .build().toUriString();
         this.setDefaultTargetUrl(targetUrl);
         super.onAuthenticationSuccess(request, response, authentication);

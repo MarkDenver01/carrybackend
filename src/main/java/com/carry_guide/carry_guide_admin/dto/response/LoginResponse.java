@@ -9,6 +9,8 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LoginResponse {
     private String jwtToken;
+    private String jwtIssuedAt;
+    private String jwtExpirationTime;
     private String userName;
     private String role;
     private AdminResponse adminResponse;
@@ -16,8 +18,10 @@ public class LoginResponse {
     private DriverResponse driverResponse;
 
     // for admin
-    public LoginResponse(String jwtToken, String userName, String role, AdminResponse adminResponse) {
+    public LoginResponse(String jwtToken, String jwtIssuedAt, String jwtExpirationTime, String userName, String role, AdminResponse adminResponse) {
         this.jwtToken = jwtToken;
+        this.jwtIssuedAt = jwtIssuedAt;
+        this.jwtExpirationTime = jwtExpirationTime;
         this.userName = userName;
         this.role = role;
         this.adminResponse = adminResponse;

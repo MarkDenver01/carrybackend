@@ -9,6 +9,7 @@ import com.carry_guide.carry_guide_admin.service.CustomizedUserDetails;
 import com.carry_guide.carry_guide_admin.service.UserService;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
 import com.carry_guide.carry_guide_admin.model.entity.User;
+import com.carry_guide.carry_guide_admin.utils.DateTimeHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,7 +67,7 @@ public class ApiController {
 
         CustomizedUserDetails customizedUserDetails = (CustomizedUserDetails) authentication.getPrincipal();
 
-        String jwtToken = jwtUtils.generateToken(customizedUserDetails);
+        JwtUtils.JwtResponse jwtToken = jwtUtils.generateToken(customizedUserDetails);
 
         String role = customizedUserDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -76,7 +77,7 @@ public class ApiController {
 
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "User not found", "st atus", false));
+                    .body(Map.of("message", "User not found", "status", false));
         }
 
         User user= optionalUser.get();
@@ -91,12 +92,17 @@ public class ApiController {
                         user.getAdmin().getUserName(),
                         user.getAdmin().getEmail(),
                         String.valueOf(user.getAdmin().getCreatedDate()),
-                        user.getAdmin().getProfileUrl()
+                        user.getAdmin().getProfileUrl(),
+                        String.valueOf(user.getAdmin().getAccountStatus())
                 );
             }
 
             loginResponse = new LoginResponse(
-                    jwtToken, user.getUserName(), role, adminResponse);
+                    jwtToken.token(),
+                    DateTimeHelper.format(jwtToken.issuedAt()),
+                    DateTimeHelper.format(jwtToken.expiresAt()),
+                    user.getUserName(),
+                    role, adminResponse);
         }
 
         return ResponseEntity.ok(loginResponse);
