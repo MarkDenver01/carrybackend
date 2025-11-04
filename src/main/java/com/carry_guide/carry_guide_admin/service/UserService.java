@@ -1,7 +1,11 @@
 package com.carry_guide.carry_guide_admin.service;
 
+import com.carry_guide.carry_guide_admin.dto.response.DriverResponse;
+import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
 import com.carry_guide.carry_guide_admin.dto.service.UserDomainService;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
+import com.carry_guide.carry_guide_admin.model.entity.Driver;
+import com.carry_guide.carry_guide_admin.model.entity.Role;
 import com.carry_guide.carry_guide_admin.model.entity.User;
 import com.carry_guide.carry_guide_admin.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
+
+import static com.carry_guide.carry_guide_admin.utils.Utility.getRoleState;
 
 @Service
 public class UserService implements UserDomainService {
@@ -42,6 +45,9 @@ public class UserService implements UserDomainService {
     EmailService emailService;
 
     @Autowired
+    OtpService otpService;
+
+    @Autowired
     JwtUtils jwtUtils;
 
     private final Map<String, String> otpStorage = new HashMap<>();
@@ -53,39 +59,32 @@ public class UserService implements UserDomainService {
     }
 
     @Override
-    public String requestOtp(String mobileNumber) {
-        String otp = String.format("%06d", new Random().nextInt(999999));
-        otpStorage.put(mobileNumber, otp);
-        otpExpiry.put(mobileNumber, LocalDateTime.now().plusMinutes(5));
-
-        return "Verification code sent to: " + mobileNumber;
+    public void sendOtp(String mobileNumber) {
+        otpService.sendOtp(mobileNumber);
     }
 
     @Override
-    public boolean verifyOtp(String mobileNumber, String otp){
-        if (!otpStorage.containsKey(mobileNumber)) return false;
-
-        if (LocalDateTime.now().isAfter(otpExpiry.get(mobileNumber))) {
-            otpStorage.remove(mobileNumber);
-            return false; // expired
+    public LoginResponse verifyOtpAndGenerateToken(String mobileNumber, String otpCode, String userRole) {
+        boolean verified = otpService.verifyOtp(mobileNumber, otpCode);
+        if (!verified) {
+            throw new RuntimeException("Invalid or expired OTP");
         }
 
+        Role role = roleRepository.findRoleByRoleState(getRoleState(userRole))
+                .orElseThrow(() -> new RuntimeException("Invalid role"));
 
-        if (otpStorage.get(mobileNumber).equals(otp)) {
-            otpStorage.remove(mobileNumber);
-            otpExpiry.remove(mobileNumber);
+        User user = userRepository.findByMobileNumber(mobileNumber).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setMobileNumber(mobileNumber);
+            newUser.setSignupMethod("MOBILE_OTP");
+            newUser.setVerified(true);
+            newUser.setRole(role); // e.g. CUSTOMER or RIDER
+           return userRepository.save(newUser);
+        });
 
-            // Create or verify user
-            User user = userRepository.findByMobileNumber(mobileNumber)
-                    .orElseGet(() -> {
-                        User newUser = new User();
-                        newUser.setMobileNumber(mobileNumber);
-                        return newUser;
-                    });
-            user.setVerified(true);
-            userRepository.save(user);
-            return true;
-        }
-        return false;
+        // TODO
+        return null;
     }
+
+
 }

@@ -18,6 +18,7 @@ public class OtpService {
     SemaphoreSmsService smsService;
 
     public void sendOtp(String mobileNumber) {
+        // Always 6 digits
         String otp = String.format("%06d", new Random().nextInt(999999));
         smsService.sendOtp(mobileNumber, otp);
 
@@ -25,6 +26,7 @@ public class OtpService {
         entity.setMobileNumber(mobileNumber);
         entity.setOtpCode(otp);
         entity.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        entity.setVerified(false);
         otpRepository.save(entity);
     }
 
@@ -33,10 +35,11 @@ public class OtpService {
                 .findTopByMobileNumberOrderByCreatedAtDesc(mobileNumber)
                 .orElseThrow(() -> new RuntimeException("OTP not found"));
 
-        if (record.isVerified() || record.getExpiresAt().isBefore(LocalDateTime.now()))
-            return false;
+        if (record.isVerified()) return false;
+        if (record.getExpiresAt().isBefore(LocalDateTime.now())) return false;
 
-        if (record.getOtpCode().equals(otpCode)) {
+        boolean match = record.getOtpCode().equals(otpCode);
+        if (match) {
             record.setVerified(true);
             otpRepository.save(record);
             return true;

@@ -61,6 +61,20 @@ public class JwtUtils {
         return new JwtResponse(token, issuedAt, expirationDate);
     }
 
+    public JwtResponse generateMobileToken(String mobileNumber) {
+        Date issuedAt = new Date();
+        Date expirationDate = new Date(issuedAt.getTime() + expirationMs);
+
+        String token = Jwts.builder()
+                .subject(mobileNumber)
+                .claim("type", "MOBILE")
+                .issuedAt(issuedAt)
+                .expiration(expirationDate)
+                .signWith(getSecretKey())
+                .compact();
+        return new JwtResponse(token, issuedAt, expirationDate);
+    }
+
     public Date getExpirationDateFromToken(String token) {
         return Jwts.parser()
                 .verifyWith(getSecretKey())
@@ -78,16 +92,6 @@ public class JwtUtils {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
-    }
-
-    public String generateMobileToken(String mobileNumber) {
-        return Jwts.builder()
-                .subject(mobileNumber)
-                .claim("type", "MOBILE")
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + expirationMs))
-                .signWith(getSecretKey())
-                .compact();
     }
 
     public long getRemainingValidity(String token) {

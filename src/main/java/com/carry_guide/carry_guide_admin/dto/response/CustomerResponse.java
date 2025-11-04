@@ -11,9 +11,11 @@ import lombok.NoArgsConstructor;
 public class CustomerResponse {
     private Long customerId;
     private String userName;
-    private String address;
-    private int mobileNumber;
     private String email;
+    private String mobileNumber;
+    private String roleState;
+    private String photoUrl;
+    private String address;
     private String createdDate;
-    private AccountStatus accountStatus;
+    private String accountStatus;
 }

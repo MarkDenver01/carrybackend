@@ -30,6 +30,10 @@ public class Customer {
     @Column(name = "username")
     private String userName;
 
+    @Size(max = 100)
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @NotBlank
     @Size(max = 100)
     @Column(name = "address")

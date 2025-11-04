@@ -26,20 +26,4 @@ public class LoginResponse {
         this.role = role;
         this.adminResponse = adminResponse;
     }
-
-    // for customer
-    public LoginResponse(String jwtToken, String userName, String role, CustomerResponse customerResponse) {
-        this.jwtToken = jwtToken;
-        this.userName = userName;
-        this.role = role;
-        this.customerResponse = customerResponse;
-    }
-
-    // for driver
-    public LoginResponse(String jwtToken, String userName, String role, DriverResponse driverResponse) {
-        this.jwtToken = jwtToken;
-        this.userName = userName;
-        this.role = role;
-        this.driverResponse = driverResponse;
-    }
 }

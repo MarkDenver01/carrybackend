@@ -11,12 +11,14 @@ import lombok.NoArgsConstructor;
 public class DriverResponse {
     private Long driverId;
     private String userName;
-    private String address;
-    private int mobileNumber;
     private String email;
+    private String mobileNumber;
+    private String roleState;
+    private String photoUrl;
+    private String address;
     private String driversLicenseNumber;
     private String frontIdUrl;
     private String backIdUrl;
     private String createdDate;
-    private AccountStatus accountStatus;
+    private String accountStatus;
 }

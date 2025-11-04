@@ -1,8 +1,7 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
 import com.carry_guide.carry_guide_admin.dto.request.LoginRequest;
-import com.carry_guide.carry_guide_admin.dto.request.MobileLoginRequest;
-import com.carry_guide.carry_guide_admin.dto.request.VerifyRequest;
+import com.carry_guide.carry_guide_admin.dto.request.MobileRequest;
 import com.carry_guide.carry_guide_admin.dto.response.AdminResponse;
 import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
 import com.carry_guide.carry_guide_admin.service.CustomizedUserDetails;
@@ -109,31 +108,8 @@ public class ApiController {
     }
 
     @PostMapping("/public/send_otp")
-    public ResponseEntity<?> sendOtp(@RequestBody MobileLoginRequest mobileLoginRequest) {
-        try {
-            userService.requestOtp(mobileLoginRequest.getMobileNumber());
-            return ResponseEntity.ok("Success");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body("Failed to send OTP: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("public/verify_otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody VerifyRequest verifyRequest)  {
-        try {
-            boolean success = userService.verifyOtp(
-                    verifyRequest.getMobileNumber(),
-                    verifyRequest.getOtp());
-
-            if (success) {
-                String jwtToken = jwtUtils.generateMobileToken(verifyRequest.getMobileNumber());
-                return ResponseEntity.ok("Success");
-            } else {
-                return ResponseEntity.badRequest().body("Invalid or expired verification code");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Unexpected error: " + e.getMessage());
-        }
+    public ResponseEntity<?> sendOtp(@RequestBody MobileRequest mobileRequest) {
+        userService.sendOtp(mobileRequest.getMobileNumber());
+        return ResponseEntity.ok("OTP successfully sent to " + mobileRequest.getMobileNumber());
     }
 }
