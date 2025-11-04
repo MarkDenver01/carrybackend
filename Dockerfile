@@ -1,10 +1,7 @@
-# Use OpenJDK 21
-FROM openjdk:21-jdk-slim
+# Use Eclipse Temurin (official OpenJDK builds, replaces openjdk)
+FROM eclipse-temurin:21-jdk-jammy AS build
 
 WORKDIR /app
-
-# Install curl for debugging (optional)
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
 COPY . .
@@ -12,11 +9,20 @@ COPY . .
 # Make Maven wrapper executable
 RUN chmod +x mvnw
 
-# Build the Spring Boot JAR
+# Build the Spring Boot JAR (skip tests for faster build)
 RUN ./mvnw clean package -DskipTests
 
-# Expose application port
+
+# ---- Runtime stage ----
+FROM eclipse-temurin:21-jdk-jammy
+
+WORKDIR /app
+
+# Copy built JAR from build stage
+COPY --from=build /app/target/carry_guide_admin-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port for Render
 EXPOSE 8080
 
-# Start the Spring Boot app directly
-ENTRYPOINT ["java", "-jar", "target/carry_guide_admin-0.0.1-SNAPSHOT.jar"]
+# Run the app
+ENTRYPOINT ["java", "-jar", "app.jar"]
