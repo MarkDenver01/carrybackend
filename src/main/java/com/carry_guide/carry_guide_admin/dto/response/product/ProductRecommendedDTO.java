@@ -1,4 +1,4 @@
-package com.carry_guide.carry_guide_admin.dto;
+package com.carry_guide.carry_guide_admin.dto.response.product;
 
 import java.time.LocalDateTime;
 

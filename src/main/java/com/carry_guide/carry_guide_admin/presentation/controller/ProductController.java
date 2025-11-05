@@ -1,10 +1,10 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
-import com.carry_guide.carry_guide_admin.dto.ProductDTO;
-import com.carry_guide.carry_guide_admin.dto.ProductRecommendedDTO;
-import com.carry_guide.carry_guide_admin.dto.request.ProductRecommendedRequest;
-import com.carry_guide.carry_guide_admin.dto.request.ProductRequest;
-import com.carry_guide.carry_guide_admin.dto.request.ProductStatusUpdateRequest;
+import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
+import com.carry_guide.carry_guide_admin.dto.response.product.ProductRecommendedDTO;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductRecommendedRequest;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductRequest;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductStatusUpdateRequest;
 import com.carry_guide.carry_guide_admin.presentation.handler.BaseController;
 import com.carry_guide.carry_guide_admin.service.ProductService;
 import jakarta.validation.Valid;

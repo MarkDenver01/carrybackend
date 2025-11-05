@@ -1,28 +1,33 @@
-package com.carry_guide.carry_guide_admin.dto.request;
+package com.carry_guide.carry_guide_admin.dto.request.product;
 
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
-public record ProductRecommendedRequest (
+public record ProductRequest(
         @NotBlank(message = "Product code is required")
         @Size(max = 50)
         String productCode,
         @NotBlank(message = "Product name is required")
-        @Size(max = 100)
+        @Size(max = 255)
         String productName,
         @NotBlank(message = "Description is required")
-        @Size(max = 200)
+        @Size(max = 255)
         String productDescription,
+        @PositiveOrZero(message = "Stocks must be 0 or greater")
+        int stocks,
+
         @NotBlank(message = "Product size is required")
-        @Size(max = 100)
+        @Size(max = 50)
         String productSize,
+        @NotBlank(message = "Product status is required")
+        String productStatus,
+
         @NotBlank(message = "Product image URL is required")
-        @Size(max = 200)
+        @Size(max = 255)
         String productImgUrl,
-        @FutureOrPresent(message = "Expiry date must not be in the past")
-        LocalDateTime expiryDate
-){
-}
+        LocalDateTime expiryDate,
+        LocalDateTime productInDate
+) {}

@@ -1,10 +1,10 @@
 package com.carry_guide.carry_guide_admin.service;
 
-import com.carry_guide.carry_guide_admin.dto.ProductDTO;
-import com.carry_guide.carry_guide_admin.dto.ProductRecommendedDTO;
-import com.carry_guide.carry_guide_admin.dto.request.ProductRecommendedRequest;
-import com.carry_guide.carry_guide_admin.dto.request.ProductRequest;
-import com.carry_guide.carry_guide_admin.dto.request.ProductStatusUpdateRequest;
+import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
+import com.carry_guide.carry_guide_admin.dto.response.product.ProductRecommendedDTO;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductRecommendedRequest;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductRequest;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductStatusUpdateRequest;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
 import com.carry_guide.carry_guide_admin.model.entity.ProductRecommended;
 import com.carry_guide.carry_guide_admin.presentation.handler.BusinessException;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
