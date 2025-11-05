@@ -80,16 +80,4 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
-
-    // Optional: Fallback for unexpected errors
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", 500);
-        response.put("message", "An unexpected error occurred: " + ex.getMessage());
-        response.put("data", null);
-
-        return ResponseEntity.internalServerError().body(response);
-    }
 }
