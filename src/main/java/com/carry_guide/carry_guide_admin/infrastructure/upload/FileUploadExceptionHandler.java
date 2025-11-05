@@ -1,4 +1,4 @@
-package com.carry_guide.carry_guide_admin.infrastructure.exception;
+package com.carry_guide.carry_guide_admin.infrastructure.upload;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
