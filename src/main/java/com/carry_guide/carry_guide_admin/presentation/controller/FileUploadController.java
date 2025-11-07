@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/file")
 public class FileUploadController {
 
     @Value("${app.upload.folder}")
@@ -20,7 +20,7 @@ public class FileUploadController {
     @Value("${app.upload.base-url}")
     private String baseUrl;
 
-    @PostMapping("/file/upload")
+    @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadProductImage(@RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty()) {
