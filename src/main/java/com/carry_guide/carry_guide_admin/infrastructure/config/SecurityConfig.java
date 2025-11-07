@@ -89,7 +89,7 @@ public class SecurityConfig {
             if (!userRepository.existsByEmail("wrapandcarry@admin.com")) {
                 User user = new User();
                 user.setUserName("Administrator");
-                user.setEmail("wrapandcarry@admnin.com");
+                user.setEmail("wrapandcarry@admin.com");
                 user.setPassword(passwordEncoder.encode("admin"));
                 user.setSignupMethod("email");
                 user.setRole(adminRole);
