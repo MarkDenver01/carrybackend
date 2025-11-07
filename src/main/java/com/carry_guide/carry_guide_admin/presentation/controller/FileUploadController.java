@@ -21,6 +21,7 @@ public class FileUploadController {
     @Value("${app.upload.base-url}")
     private String baseUrl;
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadProductImage(@RequestParam("file") MultipartFile file) {
         try {
