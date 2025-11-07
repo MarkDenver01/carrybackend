@@ -41,7 +41,7 @@ public class FileUploadController {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // Build full URL
-            String imageUrl = baseUrl + uploadFolder + fileName;
+            String imageUrl = baseUrl + "/" + uploadFolder + fileName;
 
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", imageUrl);
