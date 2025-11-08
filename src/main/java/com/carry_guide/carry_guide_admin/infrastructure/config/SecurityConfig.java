@@ -135,8 +135,6 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/file/**").permitAll()
-                        .requestMatchers("/api/product/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .requestMatchers("/driver/**").hasRole("RIDER")
