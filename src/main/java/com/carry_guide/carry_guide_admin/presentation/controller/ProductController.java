@@ -6,6 +6,7 @@ import com.carry_guide.carry_guide_admin.dto.request.product.ProductRecommendedR
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductRequest;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductStatusUpdateRequest;
 import com.carry_guide.carry_guide_admin.presentation.handler.BaseController;
+import com.carry_guide.carry_guide_admin.presentation.handler.ValidationException;
 import com.carry_guide.carry_guide_admin.service.FileUploadService;
 import com.carry_guide.carry_guide_admin.service.ProductService;
 import jakarta.validation.Valid;
@@ -33,9 +34,13 @@ public class ProductController extends BaseController {
 
     @PostMapping(value = "/api/product/add", consumes = "multipart/form-data")
     public ResponseEntity<?> addProduct(
-            @RequestPart("product") @Valid ProductRequest request,
+            @RequestPart("product") ProductRequest request,
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
+        if ((request.getProductImgUrl() == null || request.getProductImgUrl().isBlank()) && (file == null || file.isEmpty())) {
+            throw new ValidationException("Product image is required");
+        }
+
         // If file exists, upload it (store to disk or cloud) and set URL
         if (file != null && !file.isEmpty()) {
             String imageUrl = fileUploadService.save(file); // your own service

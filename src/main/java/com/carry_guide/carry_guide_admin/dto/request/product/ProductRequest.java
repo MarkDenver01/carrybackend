@@ -31,9 +31,9 @@ public class ProductRequest {
         @NotBlank(message = "Product status is required")
         private   String productStatus;
 
-        @NotBlank(message = "Product image URL is required")
         @Size(max = 255)
         private  String productImgUrl;
-        private   LocalDateTime expiryDate;
+
+        private  LocalDateTime expiryDate;
         private  LocalDateTime productInDate;
 }
