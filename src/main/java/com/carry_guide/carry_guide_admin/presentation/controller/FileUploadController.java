@@ -42,7 +42,8 @@ public class FileUploadController extends BaseController {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // Build full URL
-            String imageUrl = baseUrl + "/" + fileName;
+            String imageUrl = baseUrl + "/uploads/products/" + fileName;
+
 
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", imageUrl);
