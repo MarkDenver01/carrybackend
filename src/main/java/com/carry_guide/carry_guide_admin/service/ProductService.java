@@ -82,15 +82,15 @@ public class ProductService {
     }
 
     private void applyProductRequest(Product product, ProductRequest request) {
-        product.setProductCode(request.productCode());
-        product.setProductName(request.productName());
-        product.setProductDescription(request.productDescription());
-        product.setStocks(request.stocks());
-        product.setProductSize(request.productSize());
-        product.setProductStatus(request.productStatus());
-        product.setProductImgUrl(request.productImgUrl());
-        product.setExpiryDate(request.expiryDate());
-        product.setProductInDate(request.productInDate());
+        product.setProductCode(request.getProductCode());
+        product.setProductName(request.getProductName());
+        product.setProductDescription(request.getProductDescription());
+        product.setStocks(request.getStocks());
+        product.setProductSize(request.getProductSize());
+        product.setProductStatus(request.getProductStatus());
+        product.setProductImgUrl(request.getProductImgUrl());
+        product.setExpiryDate(request.getExpiryDate());
+        product.setProductInDate(request.getProductInDate());
     }
 
     private ProductDTO mapToProductDTO(Product product) {

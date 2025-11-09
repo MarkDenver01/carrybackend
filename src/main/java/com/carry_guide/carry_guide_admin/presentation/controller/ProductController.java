@@ -6,11 +6,14 @@ import com.carry_guide.carry_guide_admin.dto.request.product.ProductRecommendedR
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductRequest;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductStatusUpdateRequest;
 import com.carry_guide.carry_guide_admin.presentation.handler.BaseController;
+import com.carry_guide.carry_guide_admin.service.FileUploadService;
 import com.carry_guide.carry_guide_admin.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
@@ -19,26 +22,45 @@ public class ProductController extends BaseController {
     @Autowired
     ProductService productService;
 
+    @Autowired
+    FileUploadService fileUploadService;
+
     @GetMapping("/api/product/get_recommendations")
     public ResponseEntity<?> getAllProductsWithRecommendations() {
         List<ProductDTO> products = productService.getAllProductsWithRecommendations();
         return ok(products, "Fetched all products successfully");
     }
 
-    @PostMapping("/api/product/add")
-    public ResponseEntity<?> addProduct(@Valid @RequestBody ProductRequest request) {
+    @PostMapping(value = "/api/product/add", consumes = "multipart/form-data")
+    public ResponseEntity<?> addProduct(
+            @RequestPart("product") @Valid ProductRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        // If file exists, upload it (store to disk or cloud) and set URL
+        if (file != null && !file.isEmpty()) {
+            String imageUrl = fileUploadService.save(file); // your own service
+            request.setProductImgUrl(imageUrl);
+        }
+
         ProductDTO product = productService.addProduct(request);
         return ok(product, "Product created successfully");
     }
 
-    @PutMapping("/api/product/{productId}/update")
+    @PutMapping(value = "/api/product/{productId}/update", consumes = "multipart/form-data")
     public ResponseEntity<?> updateProduct(
             @PathVariable Long productId,
-            @Valid @RequestBody ProductRequest request
+            @RequestPart("product") @Valid ProductRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file
     ) {
+        if (file != null && !file.isEmpty()) {
+            String imageUrl = fileUploadService.save(file);
+            request.setProductImgUrl(imageUrl);
+        }
+
         ProductDTO product = productService.updateProduct(productId, request);
         return ok(product, "Product updated successfully");
     }
+
 
     @PatchMapping("/api/product/{productId}/update_status")
     public ResponseEntity<?> updateProductStatus(

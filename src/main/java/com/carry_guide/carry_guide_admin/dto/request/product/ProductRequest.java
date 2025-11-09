@@ -3,31 +3,37 @@ package com.carry_guide.carry_guide_admin.dto.request.product;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-public record ProductRequest(
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductRequest {
         @NotBlank(message = "Product code is required")
         @Size(max = 50)
-        String productCode,
+        private String productCode;
         @NotBlank(message = "Product name is required")
         @Size(max = 255)
-        String productName,
+        private String productName;
         @NotBlank(message = "Description is required")
         @Size(max = 255)
-        String productDescription,
+        private  String productDescription;
         @PositiveOrZero(message = "Stocks must be 0 or greater")
-        int stocks,
+        int stocks;
 
         @NotBlank(message = "Product size is required")
         @Size(max = 50)
-        String productSize,
+        private   String productSize;
         @NotBlank(message = "Product status is required")
-        String productStatus,
+        private   String productStatus;
 
         @NotBlank(message = "Product image URL is required")
         @Size(max = 255)
-        String productImgUrl,
-        LocalDateTime expiryDate,
-        LocalDateTime productInDate
-) {}
+        private  String productImgUrl;
+        private   LocalDateTime expiryDate;
+        private  LocalDateTime productInDate;
+}
