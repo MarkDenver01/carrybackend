@@ -11,6 +11,7 @@ import com.carry_guide.carry_guide_admin.presentation.handler.BusinessException;
 import com.carry_guide.carry_guide_admin.presentation.handler.ProductNotFoundException;
 import com.carry_guide.carry_guide_admin.presentation.handler.ValidationException;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ProductService {
     @Autowired
     JpaProductRepository productRepository;
