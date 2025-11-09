@@ -10,6 +10,7 @@ import com.carry_guide.carry_guide_admin.repository.JpaRoleRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserRepository;
 import com.carry_guide.carry_guide_admin.infrastructure.security.AuthEntryPoint;
 import com.carry_guide.carry_guide_admin.infrastructure.security.AuthTokenFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -34,19 +35,15 @@ import java.time.LocalDateTime;
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
 
-    private final AuthEntryPoint unAuthorizedHandler;
-    private final SocialAuthenticationHandler authorizedHandler;
-    private final CorsConfig corsConfig;
+    @Autowired
+    private AuthEntryPoint unAuthorizedHandler;
 
-    public SecurityConfig(
-            AuthEntryPoint unAuthorizedHandler,
-            @Lazy SocialAuthenticationHandler authorizedHandler,
-            CorsConfig corsConfig
-    ) {
-        this.unAuthorizedHandler = unAuthorizedHandler;
-        this.authorizedHandler = authorizedHandler;
-        this.corsConfig = corsConfig;
-    }
+    @Autowired
+    @Lazy
+    private SocialAuthenticationHandler authorizedHandler;
+
+    @Autowired
+    private CorsConfig corsConfig;
 
     /**
      * Filter to handle JWT token in request header.
@@ -134,10 +131,10 @@ public class SecurityConfig {
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
-                        .requestMatchers("/driver/**").hasRole("RIDER")
+                        .requestMatchers("/user/public/**").permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/customer/**").hasAuthority("CUSTOMER")
+                        .requestMatchers("/driver/**").hasAuthority("RIDER")
                         .anyRequest().authenticated())
 
                 // OAuth2 login handling (success handler provided)

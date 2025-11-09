@@ -3,6 +3,8 @@ package com.carry_guide.carry_guide_admin.presentation.handler;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
+
 /**
  * Provides standard API response helpers for all controllers.
  * Extend this class to automatically gain consistent JSON response format.
