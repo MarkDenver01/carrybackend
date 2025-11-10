@@ -129,7 +129,7 @@ public class SecurityConfig {
                         .requestMatchers("/csrf_token").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/user/public/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/upload/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")

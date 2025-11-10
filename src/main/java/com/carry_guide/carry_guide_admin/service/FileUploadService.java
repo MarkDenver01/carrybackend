@@ -39,7 +39,7 @@ public class FileUploadService {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // Build full accessible URL
-            return baseUrl + "/upload/product/" + fileName;
+            return baseUrl + "upload/product/" + fileName;
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file: " + e.getMessage(), e);
