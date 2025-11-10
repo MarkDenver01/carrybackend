@@ -10,6 +10,8 @@ import com.carry_guide.carry_guide_admin.presentation.handler.ValidationExceptio
 import com.carry_guide.carry_guide_admin.service.FileUploadService;
 import com.carry_guide.carry_guide_admin.service.ProductService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,8 @@ public class ProductController extends BaseController {
 
     @Autowired
     FileUploadService fileUploadService;
+
+    private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
     @GetMapping("/api/product/get_recommendations")
     public ResponseEntity<?> getAllProductsWithRecommendations() {
@@ -45,6 +49,7 @@ public class ProductController extends BaseController {
         if (file != null && !file.isEmpty()) {
             String imageUrl = fileUploadService.save(file); // your own service
             request.setProductImgUrl(imageUrl);
+            log.info("img Url {}", imageUrl);
         }
 
         ProductDTO product = productService.addProduct(request);
