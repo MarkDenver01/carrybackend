@@ -15,9 +15,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path path = Paths.get(uploadFolder).toAbsolutePath().normalize();
         registry.addResourceHandler("/upload/product/**")
-                .addResourceLocations("file:" + path.toString() + "/");
-        System.out.println("Static resources served from: " + path);
+                .addResourceLocations("file:" + uploadFolder + "/");
     }
 }
