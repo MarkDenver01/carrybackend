@@ -37,6 +37,9 @@ public class FileUploadService {
 
             // Save file
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("File saved at: " + filePath);
+
+            System.out.println("img url: " + baseUrl + "upload/product/" + fileName);
 
             // Build full accessible URL
             return baseUrl + "upload/product/" + fileName;
