@@ -112,4 +112,25 @@ public class AuthController {
         userService.sendOtp(mobileRequest.getMobileNumber());
         return ResponseEntity.ok("OTP successfully sent to " + mobileRequest.getMobileNumber());
     }
+
+    @PostMapping("/public/verify_otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody MobileRequest mobileRequest) {
+        try {
+            // Identify if the number belongs to an existing user, and infer role
+            Optional<User> existingUser = userService.findByMobileNumber(mobileRequest.getMobileNumber());
+            String role = existingUser.map(u -> u.getRole().getRoleState().name()).orElse("CUSTOMER");
+
+            LoginResponse response = userService.verifyOtpAndGenerateToken(
+                    mobileRequest.getMobileNumber(),
+                    mobileRequest.getOtp(),
+                    role
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage(), "status", false));
+        }
+    }
 }
