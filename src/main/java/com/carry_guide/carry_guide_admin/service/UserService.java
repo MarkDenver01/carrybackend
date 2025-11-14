@@ -84,8 +84,12 @@ public class UserService  {
         // CASE 3.1 → New User Signup
         // =============================
         if (user == null) {
-            role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
-                    .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
+             role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
+                    .orElseGet(() -> {
+                        Role newRole = new Role();
+                        newRole.setRoleState(RoleState.CUSTOMER);
+                        return roleRepository.save(newRole);
+                    });
 
             user = new User();
             user.setMobileNumber(mobileNumber);
