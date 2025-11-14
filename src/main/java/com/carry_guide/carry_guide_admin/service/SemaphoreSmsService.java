@@ -28,7 +28,7 @@ public class SemaphoreSmsService {
         body.add("code", otp);
 
         // ❗ DO NOT ADD sender_name unless you have approved sender ID
-        // body.add("sender_name", "WrapAndCarry");
+        body.add("sendername", "SEMAPHORE");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
