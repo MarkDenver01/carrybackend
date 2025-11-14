@@ -20,7 +20,7 @@ public class ItexmoOtpService {
     @Value("${itexmo.password}")
     private String password;
 
-    @Value("${itexmo.apicode}")
+    @Value("${itexmo.api}")
     private String apiCode;
 
     @Value("${itexmo.otp.url}")
