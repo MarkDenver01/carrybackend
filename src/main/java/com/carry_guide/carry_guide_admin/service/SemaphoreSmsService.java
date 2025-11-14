@@ -26,7 +26,7 @@ public class SemaphoreSmsService {
         body.add("number", formatted);
         body.add("message", "Your WrapAndCarry OTP is {otp}. Please use within 5 minutes.");
         body.add("code", otp); // IMPORTANT!
-        body.add("sendername", "WrapNCarry");
+        body.add("sendername", "SEMAPHORE");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
