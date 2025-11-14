@@ -40,7 +40,7 @@ public class OtpService {
             }
         }
 
-        String otp = String.format("%05d", new Random().nextInt(99999));
+        String otp = String.format("%05d", new Random().nextInt(100000));
         smsService.sendOtp(mobileNumber, otp);
 
         OtpVerification entity = new OtpVerification();
