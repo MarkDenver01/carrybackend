@@ -28,7 +28,7 @@ public class ItexmoOtpService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String sendOtp(String mobileNumber, String otp) {
+    public void sendOtp(String mobileNumber, String otp) {
 
         String formatted = formatNumber(mobileNumber);
 
@@ -55,7 +55,6 @@ public class ItexmoOtpService {
         try {
             String response = restTemplate.postForObject(otpUrl, request, String.class);
             System.out.println("iTexMo OTP Response: " + response);
-            return response;
         } catch (Exception ex) {
             System.out.println("iTexMo OTP Error: " + ex.getMessage());
             throw new RuntimeException("Failed to send OTP via iTexMo", ex);
