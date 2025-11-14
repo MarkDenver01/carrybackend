@@ -22,8 +22,8 @@ public class OtpService {
     @Autowired
     private JpaOtpRepository otpRepository;
 
-    @Autowired
-    private ItexmoOtpService smsService;
+    //@Autowired
+    //private ItexmoOtpService smsService;
     //private SemaphoreSmsService smsService;
 
 
@@ -43,7 +43,7 @@ public class OtpService {
         }
 
         String otp = String.format("%05d", new Random().nextInt(100000));
-        smsService.sendOtp(mobileNumber, otp);
+        //smsService.sendOtp(mobileNumber, otp);
 
         OtpVerification entity = new OtpVerification();
         entity.setMobileNumber(mobileNumber);
