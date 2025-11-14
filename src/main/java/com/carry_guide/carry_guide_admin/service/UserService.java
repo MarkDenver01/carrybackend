@@ -74,23 +74,23 @@ public class UserService  {
         // 2) Fetch user (if existing)
         User user = userRepository.findByMobileNumber(mobileNumber).orElse(null);
 
-        // 3) Load customer or driver if user exists
-        Customer customer = (user != null) ? customerRepository.findByUser(user).orElse(null) : null;
-        Driver driver = (user != null) ? driverRepository.findByUser(user).orElse(null) : null;
-
-        Role role;
+        boolean isCustomer = false;
+        boolean isDriver = false;
 
         // =============================
-        // CASE 3.1 → New User Signup
+        // CASE 3.1 → NEW USER SIGNUP
         // =============================
         if (user == null) {
-             role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
+
+            // Find or create CUSTOMER role
+            Role role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
                     .orElseGet(() -> {
                         Role newRole = new Role();
                         newRole.setRoleState(RoleState.CUSTOMER);
                         return roleRepository.save(newRole);
                     });
 
+            // Create new user
             user = new User();
             user.setMobileNumber(mobileNumber);
             user.setSignupMethod("MOBILE_OTP");
@@ -98,7 +98,7 @@ public class UserService  {
             user.setRole(role);
             user = userRepository.save(user);
 
-            // CREATE CUSTOMER PROFILE
+            // Create customer profile
             Customer newCustomer = new Customer();
             newCustomer.setUser(user);
             newCustomer.setUserName("");
@@ -109,58 +109,11 @@ public class UserService  {
             newCustomer.setUserAccountStatus(AccountStatus.ACTIVATE);
 
             customerRepository.save(newCustomer);
-            customer = newCustomer;
         }
 
-        // =============================
-        // CASE 3.2 → User exists but no customer (role must become CUSTOMER)
-        // =============================
-        else if (customer == null && driver == null) {
-            // force customer role
-            role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
-                    .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
-
-            user.setRole(role);
-            userRepository.save(user);
-
-            // create missing customer profile
-            Customer newCustomer = new Customer();
-            newCustomer.setUser(user);
-            newCustomer.setUserName(user.getUserName());
-            newCustomer.setMobileNumber(mobileNumber);
-            newCustomer.setEmail(user.getEmail());
-            newCustomer.setAddress("");
-            newCustomer.setCreatedDate(LocalDateTime.now());
-            newCustomer.setUserAccountStatus(AccountStatus.ACTIVATE);
-
-            customerRepository.save(newCustomer);
-            customer = newCustomer;
-        }
-
-        // =============================
-        // CASE 3.3 → User exists + customer exists
-        // =============================
-        else if (customer != null) {
-            role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
-                    .orElseThrow(() -> new RuntimeException("Role CUSTOMER not found"));
-            user.setRole(role);
-            userRepository.save(user); // ensure role is correct
-        }
-
-        // =============================
-        // CASE 3.4 → User is DRIVER
-        // =============================
-        else if (driver != null) {
-            role = roleRepository.findRoleByRoleState(RoleState.DRIVER)
-                    .orElseThrow(() -> new RuntimeException("Role DRIVER not found"));
-            user.setRole(role);
-            userRepository.save(user);
-        }
-
-        else {
-            throw new RuntimeException("User role state is invalid.");
-        }
-
+        // Determine role
+        isCustomer = user.getRole().getRoleState() == RoleState.CUSTOMER;
+        isDriver   = user.getRole().getRoleState() == RoleState.DRIVER;
 
         // 4) Generate JWT
         JwtUtils.JwtResponse jwt = jwtUtils.generateMobileToken(mobileNumber);
@@ -172,17 +125,24 @@ public class UserService  {
         response.setRole(user.getRole().getRoleState().name());
         response.setUserName(user.getUserName());
 
-        // 5) Attach customer or driver profile
-        if (customer != null) {
+        // ========================================
+        // 5) Attach profile (FIXED MAJOR BUG)
+        // ========================================
+        if (isCustomer) {
+            Customer customer = customerRepository.findByUser(user)
+                    .orElseThrow(() -> new RuntimeException("Customer profile not found!"));
             response.setCustomerResponse(ProfileMappers.toCustomerResponse(user, customer));
         }
 
-        if (driver != null) {
+        if (isDriver) {
+            Driver driver = driverRepository.findByUser(user)
+                    .orElseThrow(() -> new RuntimeException("Driver profile not found!"));
             response.setDriverResponse(ProfileMappers.toDriverResponse(user, driver));
         }
 
         return response;
     }
+
 
 
 
