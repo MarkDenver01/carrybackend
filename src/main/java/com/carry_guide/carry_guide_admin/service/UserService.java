@@ -1,11 +1,13 @@
 package com.carry_guide.carry_guide_admin.service;
 
+import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
 import com.carry_guide.carry_guide_admin.domain.enums.RoleState;
 import com.carry_guide.carry_guide_admin.dto.ProfileMappers;
 import com.carry_guide.carry_guide_admin.dto.response.CustomerResponse;
 import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
 import com.carry_guide.carry_guide_admin.model.entity.Customer;
+import com.carry_guide.carry_guide_admin.model.entity.Driver;
 import com.carry_guide.carry_guide_admin.model.entity.Role;
 import com.carry_guide.carry_guide_admin.model.entity.User;
 import com.carry_guide.carry_guide_admin.repository.*;
@@ -63,28 +65,25 @@ public class UserService  {
     }
 
     public LoginResponse verifyOtpAndGenerateToken(String mobileNumber, String otpCode) {
-        boolean verified = otpService.verifyOtp(mobileNumber, otpCode);
-        if (!verified) {
-            throw new RuntimeException("OTP verification failed");
+
+        // 1) OTP verification
+        if (!otpService.verifyOtp(mobileNumber, otpCode)) {
+            throw new RuntimeException("OTP verification failed.");
         }
 
-        // Load user if exists
+        // 2) Fetch user (if existing)
         User user = userRepository.findByMobileNumber(mobileNumber).orElse(null);
 
-        // Load customer if exists
+        // 3) Load customer or driver if user exists
         Customer customer = (user != null) ? customerRepository.findByUser(user).orElse(null) : null;
+        Driver driver = (user != null) ? driverRepository.findByUser(user).orElse(null) : null;
 
         Role role;
 
-        // CASE 1: USER EXISTS BUT CUSTOMER RECORD NOT FOUND → FORCE CUSTOMER ROLE
-        if (user != null && customer == null) {
-            role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
-                    .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
-            user.setRole(role);
-            userRepository.save(user);
-        }
-        // CASE 2: NEW USER SIGNUP → AUTO-ASSIGN CUSTOMER ROLE
-        else if (user == null) {
+        // =============================
+        // CASE 3.1 → New User Signup
+        // =============================
+        if (user == null) {
             role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
                     .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
 
@@ -93,57 +92,94 @@ public class UserService  {
             user.setSignupMethod("MOBILE_OTP");
             user.setVerified(true);
             user.setRole(role);
-
             user = userRepository.save(user);
-        }
-        // CASE 3: USER EXISTS AND HAS CUSTOMER PROFILE → USE EXISTING ROLE
-        else {
-            if (user.getRole() == null) {
-                // fallback safety
-                role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
-                        .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
-                user.setRole(role);
-                userRepository.save(user);
-            } else {
-                role = user.getRole();
-            }
+
+            // CREATE CUSTOMER PROFILE
+            Customer newCustomer = new Customer();
+            newCustomer.setUser(user);
+            newCustomer.setUserName("");
+            newCustomer.setMobileNumber(mobileNumber);
+            newCustomer.setEmail("");
+            newCustomer.setAddress("");
+            newCustomer.setCreatedDate(LocalDateTime.now());
+            newCustomer.setUserAccountStatus(AccountStatus.ACTIVATE);
+
+            customerRepository.save(newCustomer);
+            customer = newCustomer;
         }
 
-        // Generate JWT
-        JwtUtils.JwtResponse jwtToken = jwtUtils.generateMobileToken(mobileNumber);
+        // =============================
+        // CASE 3.2 → User exists but no customer (role must become CUSTOMER)
+        // =============================
+        else if (customer == null && driver == null) {
+            // force customer role
+            role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
+                    .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
+
+            user.setRole(role);
+            userRepository.save(user);
+
+            // create missing customer profile
+            Customer newCustomer = new Customer();
+            newCustomer.setUser(user);
+            newCustomer.setUserName(user.getUserName());
+            newCustomer.setMobileNumber(mobileNumber);
+            newCustomer.setEmail(user.getEmail());
+            newCustomer.setAddress("");
+            newCustomer.setCreatedDate(LocalDateTime.now());
+            newCustomer.setUserAccountStatus(AccountStatus.ACTIVATE);
+
+            customerRepository.save(newCustomer);
+            customer = newCustomer;
+        }
+
+        // =============================
+        // CASE 3.3 → User exists + customer exists
+        // =============================
+        else if (customer != null) {
+            role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
+                    .orElseThrow(() -> new RuntimeException("Role CUSTOMER not found"));
+            user.setRole(role);
+            userRepository.save(user); // ensure role is correct
+        }
+
+        // =============================
+        // CASE 3.4 → User is DRIVER
+        // =============================
+        else if (driver != null) {
+            role = roleRepository.findRoleByRoleState(RoleState.DRIVER)
+                    .orElseThrow(() -> new RuntimeException("Role DRIVER not found"));
+            user.setRole(role);
+            userRepository.save(user);
+        }
+
+        else {
+            throw new RuntimeException("User role state is invalid.");
+        }
+
+
+        // 4) Generate JWT
+        JwtUtils.JwtResponse jwt = jwtUtils.generateMobileToken(mobileNumber);
 
         LoginResponse response = new LoginResponse();
-        response.setJwtToken(jwtToken.token());
-        response.setJwtIssuedAt(jwtToken.issuedAt().toString());
-        response.setJwtExpirationTime(jwtToken.expiresAt().toString());
-        response.setRole(role.getRoleState().name());
+        response.setJwtToken(jwt.token());
+        response.setJwtIssuedAt(jwt.issuedAt().toString());
+        response.setJwtExpirationTime(jwt.expiresAt().toString());
+        response.setRole(user.getRole().getRoleState().name());
         response.setUserName(user.getUserName());
-        final User finalUser = user;
 
-        // CUSTOMER RESPONSE
-        if (role.getRoleState() == RoleState.CUSTOMER) {
-            customerRepository.findByUser(user).ifPresentOrElse(
-                    c -> response.setCustomerResponse(ProfileMappers.toCustomerResponse(finalUser, c)),
-                    () -> {
-                        CustomerResponse temp = new CustomerResponse();
-                        temp.setMobileNumber(mobileNumber);
-                        response.setCustomerResponse(temp);
-                    }
-            );
+        // 5) Attach customer or driver profile
+        if (customer != null) {
+            response.setCustomerResponse(ProfileMappers.toCustomerResponse(user, customer));
         }
 
-        // DRIVER RESPONSE
-        if (role.getRoleState() == RoleState.DRIVER) {
-            driverRepository.findByUser(user).ifPresentOrElse(
-                    driver -> response.setDriverResponse(ProfileMappers.toDriverResponse(finalUser, driver)),
-                    () -> {
-                        throw new RuntimeException("Driver not found. Only in-house drivers can log in.");
-                    }
-            );
+        if (driver != null) {
+            response.setDriverResponse(ProfileMappers.toDriverResponse(user, driver));
         }
 
         return response;
     }
+
 
 
     public Optional<User> findByMobileNumber(String mobileNumber) {

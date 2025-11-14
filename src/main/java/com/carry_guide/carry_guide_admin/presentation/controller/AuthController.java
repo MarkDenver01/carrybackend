@@ -122,8 +122,7 @@ public class AuthController {
 
             LoginResponse response = userService.verifyOtpAndGenerateToken(
                     mobileRequest.getMobileNumber(),
-                    mobileRequest.getOtp(),
-                    role
+                    mobileRequest.getOtp()
             );
 
             return ResponseEntity.ok(response);
