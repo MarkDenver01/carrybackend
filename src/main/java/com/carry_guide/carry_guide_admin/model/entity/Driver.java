@@ -25,7 +25,6 @@ public class Driver {
     @Column(name = "driver_id")
     private Long driverId;
 
-    @NotBlank
     @Size(max = 20)
     @Column(name = "username")
     private String userName;
@@ -34,7 +33,6 @@ public class Driver {
     @Column(name = "photo_url")
     private String photoUrl;
 
-    @NotBlank
     @Size(max = 100)
     @Column(name = "address")
     private String address;
@@ -43,13 +41,11 @@ public class Driver {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @NotBlank
     @Size(max =50)
     @Email
     @Column(name = "email")
     private String email;
 
-    @NotBlank
     @Size(max =50)
     @Column(name = "drivers_license_number")
     private String driversLicenseNumber;

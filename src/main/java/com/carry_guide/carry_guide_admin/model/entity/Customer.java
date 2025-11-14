@@ -25,7 +25,6 @@ public class Customer {
     @Column(name = "customer_id")
     private Long customerId;
 
-    @NotBlank
     @Size(max = 20)
     @Column(name = "username")
     private String userName;
@@ -34,7 +33,6 @@ public class Customer {
     @Column(name = "photo_url")
     private String photoUrl;
 
-    @NotBlank
     @Size(max = 100)
     @Column(name = "address")
     private String address;
@@ -43,7 +41,6 @@ public class Customer {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @NotBlank
     @Size(max =50)
     @Email
     @Column(name = "email")
