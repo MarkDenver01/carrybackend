@@ -119,6 +119,7 @@ public class UserService  {
         JwtUtils.JwtResponse jwt = jwtUtils.generateMobileToken(mobileNumber);
 
         LoginResponse response = new LoginResponse();
+        response.setUserId(user.getUserId());
         response.setJwtToken(jwt.token());
         response.setJwtIssuedAt(jwt.issuedAt().toString());
         response.setJwtExpirationTime(jwt.expiresAt().toString());

@@ -9,6 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LoginResponse {
+    private Long userId;
     private String jwtToken;
     private String jwtIssuedAt;
     private String jwtExpirationTime;
