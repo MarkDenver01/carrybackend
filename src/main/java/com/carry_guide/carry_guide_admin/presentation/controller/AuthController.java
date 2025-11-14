@@ -116,10 +116,6 @@ public class AuthController {
     @PostMapping("/public/verify_otp")
     public ResponseEntity<?> verifyOtp(@RequestBody MobileRequest mobileRequest) {
         try {
-            // Identify if the number belongs to an existing user, and infer role
-            Optional<User> existingUser = userService.findByMobileNumber(mobileRequest.getMobileNumber());
-            String role = existingUser.map(u -> u.getRole().getRoleState().name()).orElse("CUSTOMER");
-
             LoginResponse response = userService.verifyOtpAndGenerateToken(
                     mobileRequest.getMobileNumber(),
                     mobileRequest.getOtp()
