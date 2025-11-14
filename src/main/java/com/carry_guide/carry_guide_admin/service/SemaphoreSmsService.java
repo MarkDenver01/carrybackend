@@ -25,15 +25,19 @@ public class SemaphoreSmsService {
         body.add("apikey", apiKey);
         body.add("number", formatted);
         body.add("message", "Your WrapAndCarry OTP is {otp}. Please use within 5 minutes.");
-        body.add("code", otp); // IMPORTANT!
-        body.add("sendername", "SEMAPHORE");
+        body.add("code", otp);
+
+        // ❗ DO NOT ADD sender_name unless you have approved sender ID
+        // body.add("sender_name", "WrapAndCarry");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-        restTemplate.postForObject(url, request, String.class);
+        String response = restTemplate.postForObject(url, request, String.class);
+
+        System.out.println("Semaphore OTP Response: " + response);
     }
 
     private String formatTo63(String number) {
