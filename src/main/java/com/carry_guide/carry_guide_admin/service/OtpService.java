@@ -23,7 +23,9 @@ public class OtpService {
     private JpaOtpRepository otpRepository;
 
     @Autowired
-    private SemaphoreSmsService smsService;
+    private ItexmoOtpService smsService;
+    //private SemaphoreSmsService smsService;
+
 
     @Autowired
     private OtpCleanupConfig otpCleanupConfig;
