@@ -8,6 +8,7 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -19,7 +20,8 @@ import java.util.Properties;
 @Service
 public class GmailService {
     @Autowired
-   Gmail gmailClient;
+    @Lazy
+    Gmail gmailClient;
 
     @Value("${base.url.react}")
     private String baseUrl;
@@ -52,6 +54,10 @@ public class GmailService {
     }
 
     public void sendVerificationCode(String to, String verificationCode) {
+        if (gmailClient == null) {
+            throw new RuntimeException("Gmail is not yet linked. Visit /user/auth");
+        }
+
         String subject = "ACCOUNT VERIFICATION";
         String text = "Thanks for registering the account." +
                 "\nTo complete the activation process, just enter the verification code below on the mobile app." +
