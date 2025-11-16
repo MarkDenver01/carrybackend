@@ -30,6 +30,8 @@ public class GmailService {
 
     // Common method to send any message via Gmail API
     private void sendMessage(String to, String subject, String text) {
+        requireGmailLinked();
+
         try {
             Properties props = new Properties();
             Session session = Session.getInstance(props, null);
@@ -54,14 +56,16 @@ public class GmailService {
     }
 
     public void sendVerificationCode(String to, String verificationCode) {
-        if (gmailClient == null) {
-            throw new RuntimeException("Gmail is not yet linked. Visit /user/auth");
-        }
-
         String subject = "ACCOUNT VERIFICATION";
         String text = "Thanks for registering the account." +
                 "\nTo complete the activation process, just enter the verification code below on the mobile app." +
                 "\nVERIFICATION CODE: " + verificationCode;
         sendMessage(to, subject, text);
+    }
+
+    private void requireGmailLinked() {
+        if (gmailClient == null) {
+            throw new RuntimeException("Gmail is not linked yet. Visit /user/auth to link Gmail.");
+        }
     }
 }
