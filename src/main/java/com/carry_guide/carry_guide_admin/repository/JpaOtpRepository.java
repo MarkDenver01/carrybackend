@@ -11,6 +11,9 @@ import java.util.Optional;
 @Repository
 public interface JpaOtpRepository extends JpaRepository<OtpVerification, Long> {
     Optional<OtpVerification> findTopByMobileNumberOrderByCreatedAtDesc(String mobileNumber);
+
+    Optional<OtpVerification> findTopByEmailAddressOrderByCreatedAtDesc(String email);
+
     Optional<OtpVerification> findByMobileNumberAndOtpCodeAndVerifiedFalse(String mobileNumber, String otpCode);
     @Transactional
     int deleteByExpiresAtBefore(LocalDateTime now);

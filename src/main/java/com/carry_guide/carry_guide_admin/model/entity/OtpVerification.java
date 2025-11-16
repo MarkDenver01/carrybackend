@@ -21,6 +21,9 @@ public class OtpVerification {
     @Column(name = "mobile_number", nullable = false)
     private String mobileNumber;
 
+    @Column(name = "email")
+    private String emailAddress;
+
     @Column(name = "otp_code", nullable = false)
     private String otpCode;
 

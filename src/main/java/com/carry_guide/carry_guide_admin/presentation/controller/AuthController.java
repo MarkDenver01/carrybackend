@@ -1,16 +1,24 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
 import com.carry_guide.carry_guide_admin.dto.request.LoginRequest;
-import com.carry_guide.carry_guide_admin.dto.request.MobileRequest;
+import com.carry_guide.carry_guide_admin.dto.request.GmailMobileRequest;
 import com.carry_guide.carry_guide_admin.dto.response.AdminResponse;
 import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
+import com.carry_guide.carry_guide_admin.repository.JpaGmailTokenRepository;
 import com.carry_guide.carry_guide_admin.service.CustomizedUserDetails;
 import com.carry_guide.carry_guide_admin.service.UserService;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
 import com.carry_guide.carry_guide_admin.model.entity.User;
 import com.carry_guide.carry_guide_admin.utils.DateTimeHelper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.gmail.GmailScopes;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,12 +28,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.StringReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,6 +52,16 @@ public class AuthController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    JpaGmailTokenRepository gmailTokenRepository;
+
+    @Value("${gmail.redirect.uri}")
+    private String redirectUri;
+
+
+    @Value("${GMAIL_CLIENT_SECRET_JSON}")
+    private String clientSecretJson;
 
     @PostMapping("/public/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -108,17 +125,17 @@ public class AuthController {
     }
 
     @PostMapping("/public/send_otp")
-    public ResponseEntity<?> sendOtp(@RequestBody MobileRequest mobileRequest) {
-        userService.sendOtp(mobileRequest.getMobileNumber());
-        return ResponseEntity.ok("OTP successfully sent to " + mobileRequest.getMobileNumber());
+    public ResponseEntity<?> sendOtp(@RequestBody GmailMobileRequest gmailMobileRequest) {
+        userService.sendOtp(gmailMobileRequest.getMobileOrEmail());
+        return ResponseEntity.ok("OTP successfully sent to " + gmailMobileRequest.getMobileOrEmail());
     }
 
     @PostMapping("/public/verify_otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody MobileRequest mobileRequest) {
+    public ResponseEntity<?> verifyOtp(@RequestBody GmailMobileRequest gmailMobileRequest) {
         try {
             LoginResponse response = userService.verifyOtpAndGenerateToken(
-                    mobileRequest.getMobileNumber(),
-                    mobileRequest.getOtp()
+                    gmailMobileRequest.getMobileOrEmail(),
+                    gmailMobileRequest.getOtp()
             );
 
             return ResponseEntity.ok(response);
@@ -127,5 +144,32 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage(), "status", false));
         }
+    }
+
+    @GetMapping("/auth")
+    public void authorize(HttpServletResponse response) throws Exception {
+        var flow = buildFlow();
+        var url = flow.newAuthorizationUrl()
+                .setRedirectUri(redirectUri)
+                .build();
+
+        response.sendRedirect(url);
+    }
+
+    private GoogleAuthorizationCodeFlow buildFlow() throws Exception {
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
+                GsonFactory.getDefaultInstance(),
+                new StringReader(clientSecretJson)
+        );
+
+        return new GoogleAuthorizationCodeFlow.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance(),
+                clientSecrets,
+                List.of(GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_READONLY)
+        )
+                .setAccessType("offline")
+                .setApprovalPrompt("force")
+                .build();
     }
 }

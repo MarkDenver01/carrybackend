@@ -23,17 +23,20 @@ public class OtpService {
     private JpaOtpRepository otpRepository;
 
     //@Autowired
-    //private ItexmoOtpService smsService;
+    //x`private ItexmoOtpService smsService;
     //private SemaphoreSmsService smsService;
 
 
     @Autowired
     private OtpCleanupConfig otpCleanupConfig;
 
+    @Autowired
+    GmailService gmailService;
+
     /**
      * 📤 Send OTP and store in database with expiry.
      */
-    public void sendOtp(String mobileNumber) {
+    public void sendMobileOtp(String mobileNumber) {
         Optional<OtpVerification> lastOtp = otpRepository.findTopByMobileNumberOrderByCreatedAtDesc(mobileNumber);
         if (lastOtp.isPresent()) {
             LocalDateTime lastSent = lastOtp.get().getCreatedAt();
@@ -54,6 +57,29 @@ public class OtpService {
         otpRepository.save(entity);
 
         log.info("OTP {} sent to {}", otp, mobileNumber);
+    }
+
+    public void sendGmailOtp(String emailAddress) {
+        Optional<OtpVerification> lastOtp = otpRepository.findTopByEmailAddressOrderByCreatedAtDesc(emailAddress);
+        if (lastOtp.isPresent()) {
+            LocalDateTime lastSent = lastOtp.get().getCreatedAt();
+            if (lastSent != null && lastSent.isAfter(LocalDateTime.now().minusSeconds(OTP_RATE_LIMIT_SECONDS))) {
+                throw new RuntimeException("Please wait at least " + OTP_RATE_LIMIT_SECONDS + " seconds before requesting another OTP.");
+            }
+        }
+
+        String otp = String.format("%05d", new Random().nextInt(100000));
+        gmailService.sendVerificationCode(emailAddress, otp);
+
+        OtpVerification entity = new OtpVerification();
+        entity.setEmailAddress(emailAddress);
+        entity.setOtpCode(otp);
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setExpiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
+        entity.setVerified(false);
+        otpRepository.save(entity);
+
+        log.info("OTP {} sent to {}", otp, emailAddress);
     }
 
     /**

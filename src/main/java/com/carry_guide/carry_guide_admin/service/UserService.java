@@ -3,7 +3,6 @@ package com.carry_guide.carry_guide_admin.service;
 import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
 import com.carry_guide.carry_guide_admin.domain.enums.RoleState;
 import com.carry_guide.carry_guide_admin.dto.ProfileMappers;
-import com.carry_guide.carry_guide_admin.dto.response.CustomerResponse;
 import com.carry_guide.carry_guide_admin.dto.response.LoginResponse;
 import com.carry_guide.carry_guide_admin.infrastructure.security.JwtUtils;
 import com.carry_guide.carry_guide_admin.model.entity.Customer;
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static com.carry_guide.carry_guide_admin.utils.Utility.getRoleState;
 
 @Service
 public class UserService  {
@@ -60,19 +57,27 @@ public class UserService  {
         return userRepository.findByEmail(email);
     }
 
-    public void sendOtp(String mobileNumber) {
-        otpService.sendOtp(mobileNumber);
+    public void sendOtp(String mobileNumberOrEmailAddress) {
+        if (isEmail(mobileNumberOrEmailAddress)) {
+            otpService.sendGmailOtp(mobileNumberOrEmailAddress);
+        } else {
+            otpService.sendMobileOtp(mobileNumberOrEmailAddress);
+        }
     }
 
-    public LoginResponse verifyOtpAndGenerateToken(String mobileNumber, String otpCode) {
+    public LoginResponse verifyOtpAndGenerateToken(String mobileOrGmail, String otpCode) {
 
         // 1) OTP verification
-        if (!otpService.verifyOtp(mobileNumber, otpCode)) {
+        if (!otpService.verifyOtp(mobileOrGmail, otpCode)) {
             throw new RuntimeException("OTP verification failed.");
         }
 
         // 2) Fetch user (if existing)
-        User user = userRepository.findByMobileNumber(mobileNumber).orElse(null);
+        User user = (isEmail(mobileOrGmail)
+                ? userRepository.findByEmail(mobileOrGmail)
+                : userRepository.findByMobileNumber(mobileOrGmail))
+                .orElse(null);
+
 
         boolean isCustomer = false;
         boolean isDriver = false;
@@ -92,8 +97,12 @@ public class UserService  {
 
             // Create new user
             user = new User();
-            user.setMobileNumber(mobileNumber);
-            user.setSignupMethod("MOBILE_OTP");
+            if (isEmail(mobileOrGmail)) {
+                user.setEmail(mobileOrGmail);
+            } else {
+                user.setMobileNumber(mobileOrGmail);
+            }
+            user.setSignupMethod((isEmail(mobileOrGmail) ? "EMAIL_OTP" : "MOBILE_OTP"));
             user.setVerified(true);
             user.setRole(role);
             user = userRepository.save(user);
@@ -102,8 +111,11 @@ public class UserService  {
             Customer newCustomer = new Customer();
             newCustomer.setUser(user);
             newCustomer.setUserName("");
-            newCustomer.setMobileNumber(mobileNumber);
-            newCustomer.setEmail("");
+            if (isEmail(mobileOrGmail)) {
+                newCustomer.setEmail(mobileOrGmail);
+            } else {
+                newCustomer.setMobileNumber(mobileOrGmail);
+            }
             newCustomer.setAddress("");
             newCustomer.setCreatedDate(LocalDateTime.now());
             newCustomer.setUserAccountStatus(AccountStatus.ACTIVATE);
@@ -116,7 +128,7 @@ public class UserService  {
         isDriver   = user.getRole().getRoleState() == RoleState.DRIVER;
 
         // 4) Generate JWT
-        JwtUtils.JwtResponse jwt = jwtUtils.generateMobileToken(mobileNumber);
+        JwtUtils.JwtResponse jwt = jwtUtils.generateMobileToken(mobileOrGmail);
 
         LoginResponse response = new LoginResponse();
         response.setUserId(user.getUserId());
@@ -144,14 +156,15 @@ public class UserService  {
         return response;
     }
 
-
-
-
     public Optional<User> findByMobileNumber(String mobileNumber) {
         return userRepository.findByMobileNumber(mobileNumber);
     }
 
     public boolean existsByMobileNumber(String mobileNumber) {
         return userRepository.findByMobileNumber(mobileNumber).isPresent();
+    }
+
+    private boolean isEmail(String input) {
+        return input.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
 }

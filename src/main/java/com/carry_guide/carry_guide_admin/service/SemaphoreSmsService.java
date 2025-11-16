@@ -19,7 +19,7 @@ public class SemaphoreSmsService {
 
         String formatted = formatTo63(mobileNumber);
 
-        String url = "https://api.semaphore.co/api/v4/otp";
+        String url = "https://api.semaphore.co/api/v4/message";
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("apikey", apiKey);
