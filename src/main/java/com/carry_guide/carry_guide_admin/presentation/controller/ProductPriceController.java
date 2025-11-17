@@ -3,6 +3,7 @@ package com.carry_guide.carry_guide_admin.presentation.controller;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
 import com.carry_guide.carry_guide_admin.service.ProductPriceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductPriceController {
 
+    @Autowired
     ProductPriceService productPriceService;
 
     @GetMapping
