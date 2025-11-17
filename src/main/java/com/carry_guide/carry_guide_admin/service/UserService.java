@@ -165,6 +165,7 @@ public class UserService  {
     }
 
     private boolean isEmail(String input) {
+        if (input == null) return false;
         return input.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
 }
