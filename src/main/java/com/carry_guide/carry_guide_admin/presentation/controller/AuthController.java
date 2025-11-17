@@ -146,7 +146,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/auth")
+    @GetMapping("/public/auth")
     public void authorize(HttpServletResponse response) throws Exception {
         var flow = buildFlow();
         var url = flow.newAuthorizationUrl()
