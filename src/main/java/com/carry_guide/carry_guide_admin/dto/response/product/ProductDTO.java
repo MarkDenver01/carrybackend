@@ -14,6 +14,8 @@ public record ProductDTO(
         String productImgUrl,
         LocalDateTime expiryDate,
         LocalDateTime productInDate,
+        Long categoryId,
+        String productCategory,
         List<ProductRecommendedDTO> recommendations
 ) {
 }

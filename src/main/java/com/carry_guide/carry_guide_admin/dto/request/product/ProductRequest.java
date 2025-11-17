@@ -36,4 +36,6 @@ public class ProductRequest {
 
         private  LocalDateTime expiryDate;
         private  LocalDateTime productInDate;
+
+        private Long categoryId;
 }

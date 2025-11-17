@@ -59,6 +59,10 @@ public class Product {
     @Column(name = "product_in_date")
     private LocalDateTime productInDate;
 
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private ProductCategory category;
+
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
     private Price price;
 
