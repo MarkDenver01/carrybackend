@@ -85,18 +85,26 @@ public class OtpService {
     /**
      * ✅ Verify OTP if it matches, not expired, and not already used.
      */
-    public boolean verifyOtp(String mobileNumber, String otpCode) {
-        OtpVerification record = otpRepository
-                .findTopByMobileNumberOrderByCreatedAtDesc(mobileNumber)
-                .orElseThrow(() -> new RuntimeException("OTP not found. Please request a new one."));
+    public boolean verifyOtp(String mobileOrEmail, String otpCode) {
+        OtpVerification record;
+        if (isEmail(mobileOrEmail)) {
+            record = otpRepository
+                    .findTopByEmailAddressOrderByCreatedAtDesc(mobileOrEmail)
+                    .orElseThrow(() -> new RuntimeException("OTP not found. Please request a new one."));
+        } else {
+            record = otpRepository
+                    .findTopByMobileNumberOrderByCreatedAtDesc(mobileOrEmail)
+                    .orElseThrow(() -> new RuntimeException("OTP not found. Please request a new one."));
+        }
+
 
         if (record.isVerified()) {
-            log.warn("OTP already used for {}", mobileNumber);
+            log.warn("OTP already used for {}", mobileOrEmail);
             return false;
         }
 
         if (record.getExpiresAt().isBefore(LocalDateTime.now())) {
-            log.warn("OTP expired for {}", mobileNumber);
+            log.warn("OTP expired for {}", mobileOrEmail);
             return false;
         }
 
@@ -104,10 +112,10 @@ public class OtpService {
         if (match) {
             record.setVerified(true);
             otpRepository.save(record);
-            log.info("✅ OTP verified successfully for {}", mobileNumber);
+            log.info("✅ OTP verified successfully for {}", mobileOrEmail);
             return true;
         } else {
-            log.warn("❌ Invalid OTP {} entered for {}", otpCode, mobileNumber);
+            log.warn("❌ Invalid OTP {} entered for {}", otpCode, mobileOrEmail);
             return false;
         }
     }
@@ -128,5 +136,10 @@ public class OtpService {
 
         int deleted = otpRepository.deleteByExpiresAtBefore(now);
         log.info("🧹 Cleaned up {} expired OTP records at {}", deleted, now);
+    }
+
+    private boolean isEmail(String input) {
+        if (input == null) return false;
+        return input.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
 }
