@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record RecommendationRuleRequest(
-        Long productId,
+        Long baseProductId,
         List<Long> recommendedProductIds,
         LocalDate effectiveDate,
         LocalDate expiryDate

@@ -8,7 +8,6 @@ import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaRecommendationRuleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,19 +18,38 @@ import java.util.List;
 @Transactional
 public class RecommendationRuleService {
 
-    @Autowired
-    JpaRecommendationRuleRepository recommendationRuleRepository;
-
-    @Autowired
-    JpaProductRepository productRepository;
+    private final JpaRecommendationRuleRepository recommendationRuleRepository;
+    private final JpaProductRepository productRepository;
 
     public RecommendationRuleDTO createRule(RecommendationRuleRequest req) {
+        // 1️⃣ Fetch main product
+        Product mainProduct = productRepository.findById(req.baseProductId())
+                .orElseThrow(() -> new RuntimeException("Main product not found"));
 
-        Product mainProduct = productRepository.findById(req.productId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-
+        // 2️⃣ Fetch recommended products
         List<Product> recommended = productRepository.findAllById(req.recommendedProductIds());
+        if (recommended.isEmpty()) {
+            throw new RuntimeException("At least one recommended product must be provided");
+        }
 
+        // 3️⃣ Prevent self-assignment
+        if (recommended.stream().anyMatch(p -> p.getProductId().equals(req.baseProductId()))) {
+            throw new RuntimeException("Main product cannot recommend itself");
+        }
+
+        // 4️⃣ Prevent duplicate assignment
+        List<RecommendationRule> existingRules = recommendationRuleRepository.findByProduct_ProductId(req.baseProductId());
+        for (RecommendationRule existing : existingRules) {
+            for (Product recProduct : existing.getRecommendedProducts()) {
+                if (req.recommendedProductIds().contains(recProduct.getProductId())) {
+                    throw new RuntimeException("Product '" + recProduct.getProductName()
+                            + "' is already assigned as a recommendation for '"
+                            + mainProduct.getProductName() + "'.");
+                }
+            }
+        }
+
+        // 5️⃣ Create and save rule
         RecommendationRule rule = new RecommendationRule();
         rule.setProduct(mainProduct);
         rule.setRecommendedProducts(recommended);
@@ -51,7 +69,7 @@ public class RecommendationRuleService {
                 .filter(r ->
                         r.isActive() &&
                                 !now.isBefore(r.getEffectiveDate()) &&
-                                !now.isAfter(r.getExpiryDate())
+                                (r.getExpiryDate() == null || !now.isAfter(r.getExpiryDate()))
                 )
                 .flatMap(r -> r.getRecommendedProducts().stream())
                 .distinct()
@@ -74,7 +92,7 @@ public class RecommendationRuleService {
                 r.getId(),
                 r.getProduct().getProductId(),
                 r.getProduct().getProductName(),
-                r.getProduct().getCategory().getCategoryName(),
+                r.getProduct().getCategory() != null ? r.getProduct().getCategory().getCategoryName() : null,
                 r.getRecommendedProducts().stream().map(Product::getProductName).toList(),
                 r.getEffectiveDate(),
                 r.getExpiryDate(),
