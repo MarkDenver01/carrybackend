@@ -32,7 +32,7 @@ public class ProductController extends BaseController {
 
     @GetMapping("/api/product/get_recommendations")
     public ResponseEntity<?> getAllProductsWithRecommendations() {
-        List<ProductDTO> products = productService.getAllProductsWithRecommendations();
+        List<ProductDTO> products = productService.getAllProducts();
         return ok(products, "Fetched all products successfully");
     }
 
@@ -87,13 +87,4 @@ public class ProductController extends BaseController {
         return deleted("Product deleted successfully");
     }
 
-
-    @PostMapping("/api/product/{productId}/recommended")
-    public ResponseEntity<?> addRecommendedProduct(
-            @PathVariable Long productId,
-            @Valid @RequestBody ProductRecommendedRequest request
-    ) {
-        ProductRecommendedDTO rec = productService.addRecommendedProduct(productId, request);
-        return ok(rec, "Recommended product added successfully");
-    }
 }

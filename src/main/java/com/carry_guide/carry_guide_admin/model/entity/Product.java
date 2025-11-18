@@ -65,9 +65,5 @@ public class Product {
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
     private Price price;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private List<ProductRecommended> recommendations = new ArrayList<>();
 }
 

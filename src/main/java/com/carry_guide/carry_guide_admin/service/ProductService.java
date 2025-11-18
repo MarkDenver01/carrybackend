@@ -1,65 +1,81 @@
 package com.carry_guide.carry_guide_admin.service;
 
 import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
-import com.carry_guide.carry_guide_admin.dto.response.product.ProductRecommendedDTO;
-import com.carry_guide.carry_guide_admin.dto.request.product.ProductRecommendedRequest;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductRequest;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductStatusUpdateRequest;
+import com.carry_guide.carry_guide_admin.infrastructure.security.AuthTokenFilter;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
 import com.carry_guide.carry_guide_admin.model.entity.ProductCategory;
-import com.carry_guide.carry_guide_admin.model.entity.ProductRecommended;
 import com.carry_guide.carry_guide_admin.presentation.handler.BusinessException;
-import com.carry_guide.carry_guide_admin.presentation.handler.ProductNotFoundException;
 import com.carry_guide.carry_guide_admin.presentation.handler.ValidationException;
+import com.carry_guide.carry_guide_admin.repository.JpaProductCategoryRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
+
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
-import com.carry_guide.carry_guide_admin.repository.JpaProductCategoryRepository;
-import com.carry_guide.carry_guide_admin.model.entity.ProductCategory;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ProductService {
-    @Autowired
-    JpaProductRepository productRepository;
 
-    @Autowired
-    JpaProductCategoryRepository productCategoryRepository;
+    private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
-    public List<ProductDTO> getAllProductsWithRecommendations() {
-        return productRepository.findAll().stream()
+    private final JpaProductRepository productRepository;
+    private final JpaProductCategoryRepository productCategoryRepository;
+
+    /** Get all products (clean, no recommendation list) */
+    public List<ProductDTO> getAllProducts() {
+        return productRepository.findAll()
+                .stream()
                 .map(this::mapToProductDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    /** Add product */
     public ProductDTO addProduct(ProductRequest productRequest) {
+        logger.info("👉 ADD PRODUCT incoming categoryId={}", productRequest.getCategoryId());
+
         Product product = new Product();
         applyProductRequest(product, productRequest);
         productRepository.save(product);
+
         return mapToProductDTO(product);
     }
 
+    /** Update product */
     public ProductDTO updateProduct(Long productId, ProductRequest productRequest) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException("Product not found with id: " + productId));
+
+        logger.info("👉 UPDATE PRODUCT productId={}, incoming categoryId={}",
+                productId, productRequest.getCategoryId());
+
         applyProductRequest(product, productRequest);
         productRepository.save(product);
+
         return mapToProductDTO(product);
     }
 
-    public ProductDTO updateProductStatus(Long productId, ProductStatusUpdateRequest productStatusUpdateRequest) {
+    /** Update only product status */
+    public ProductDTO updateProductStatus(Long productId, ProductStatusUpdateRequest req) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException("Product not found with id: " + productId));
-        product.setProductStatus(productStatusUpdateRequest.productStatus());
+
+        product.setProductStatus(req.productStatus());
         productRepository.save(product);
+
         return mapToProductDTO(product);
     }
 
+    /** Delete product */
     public void deleteProduct(Long productId) {
         if (!productRepository.existsById(productId)) {
             throw new ValidationException("Product not found with id: " + productId);
@@ -67,26 +83,7 @@ public class ProductService {
         productRepository.deleteById(productId);
     }
 
-    public ProductRecommendedDTO addRecommendedProduct(Long productId, ProductRecommendedRequest request) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        ProductRecommended rec = new ProductRecommended();
-        rec.setProduct(product);
-        rec.setProductCode(request.productCode());
-        rec.setProductName(request.productName());
-        rec.setProductDescription(request.productDescription());
-        rec.setProductSize(request.productSize());
-        rec.setProductImgUrl(request.productImgUrl());
-        rec.setExpiryDate(request.expiryDate());
-        rec.setCreatedDate(LocalDateTime.now());
-
-        product.getRecommendations().add(rec);
-        productRepository.save(product);
-
-        return mapToRecommendedDTO(rec);
-    }
-
+    /** Common mapper for updating/creating */
     private void applyProductRequest(Product product, ProductRequest request) {
         if (request.getCategoryId() == null) {
             throw new ValidationException("Category is required for product.");
@@ -104,22 +101,19 @@ public class ProductService {
         product.setProductImgUrl(request.getProductImgUrl());
         product.setExpiryDate(request.getExpiryDate());
         product.setProductInDate(request.getProductInDate());
-
         product.setCategory(category);
     }
 
+    /** Final ProductDTO mapping (clean) */
     private ProductDTO mapToProductDTO(Product product) {
-        List<ProductRecommendedDTO> recommendations = product.getRecommendations().stream()
-                .map(this::mapToRecommendedDTO)
-                .collect(Collectors.toList());
 
-        Long categoryId = null;
-        String categoryName = null;
+        Long categoryId = product.getCategory() != null
+                ? product.getCategory().getCategoryId()
+                : null;
 
-        if (product.getCategory() != null) {
-            categoryId = product.getCategory().getCategoryId();
-            categoryName = product.getCategory().getCategoryName();
-        }
+        String categoryName = product.getCategory() != null
+                ? product.getCategory().getCategoryName()
+                : null;
 
         return new ProductDTO(
                 product.getProductId(),
@@ -133,22 +127,7 @@ public class ProductService {
                 product.getExpiryDate(),
                 product.getProductInDate(),
                 categoryId,
-                categoryName,
-                recommendations
-        );
-    }
-
-
-    private ProductRecommendedDTO mapToRecommendedDTO(ProductRecommended rec) {
-        return new ProductRecommendedDTO(
-                rec.getProductRecommendedId(),
-                rec.getProductCode(),
-                rec.getProductName(),
-                rec.getProductDescription(),
-                rec.getProductSize(),
-                rec.getExpiryDate(),
-                rec.getCreatedDate(),
-                rec.getProductImgUrl()
+                categoryName
         );
     }
 }
