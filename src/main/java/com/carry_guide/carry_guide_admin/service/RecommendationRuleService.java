@@ -76,6 +76,32 @@ public class RecommendationRuleService {
                 .toList();
     }
 
+    public RecommendationRuleDTO updateRule(Long id, RecommendationRuleRequest req) {
+        RecommendationRule existing = recommendationRuleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rule not found"));
+
+        Product mainProduct = productRepository.findById(req.baseProductId())
+                .orElseThrow(() -> new RuntimeException("Main product not found"));
+
+        List<Product> recommended = productRepository.findAllById(req.recommendedProductIds());
+        if (recommended.isEmpty()) {
+            throw new RuntimeException("At least one recommended product must be provided");
+        }
+
+        if (recommended.stream().anyMatch(p -> p.getProductId().equals(req.baseProductId()))) {
+            throw new RuntimeException("Main product cannot recommend itself");
+        }
+
+        existing.setProduct(mainProduct);
+        existing.setRecommendedProducts(recommended);
+        existing.setEffectiveDate(req.effectiveDate());
+        existing.setExpiryDate(req.expiryDate());
+
+        RecommendationRule updated = recommendationRuleRepository.save(existing);
+        return toDTO(updated);
+    }
+
+
     public List<RecommendationRuleDTO> getAllRules() {
         return recommendationRuleRepository.findAll()
                 .stream()

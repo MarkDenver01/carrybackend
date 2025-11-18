@@ -1,7 +1,6 @@
 package com.carry_guide.carry_guide_admin.dto.request.product;
 
 import lombok.Data;
-
 import java.time.LocalDate;
 
 @Data
@@ -10,13 +9,12 @@ public class ProductPriceDTO {
     private Long productId;
 
     private Double basePrice;
-    private Double taxPercentage;
-    private Double discountPercentage;
-    private String discountCategory;
     private LocalDate effectiveDate;
 
     private String productName;
     private String productCode;
-
-    private Double computedFinalPrice;
+    private String productSize;
+    private String productImgUrl;
+    private int stocks;
+    private String categoryName;
 }

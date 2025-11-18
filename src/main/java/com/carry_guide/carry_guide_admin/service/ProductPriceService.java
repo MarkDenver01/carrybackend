@@ -7,7 +7,6 @@ import com.carry_guide.carry_guide_admin.model.entity.ProductPrice;
 import com.carry_guide.carry_guide_admin.repository.JpaProductPriceRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,16 +15,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductPriceService {
 
-    @Autowired
-    JpaProductPriceRepository productPriceRepository;
-
-    @Autowired
-    JpaProductRepository productRepository;
-
+    private final JpaProductPriceRepository productPriceRepository;
+    private final JpaProductRepository productRepository;
     private final ProductPriceMapper mapper;
 
     public List<ProductPriceDTO> getAll() {
-        return productPriceRepository.findAll().stream()
+        return productPriceRepository.findAll()
+                .stream()
                 .map(mapper::toDto)
                 .toList();
     }
@@ -38,9 +34,6 @@ public class ProductPriceService {
                 .priceId(dto.getPriceId())
                 .product(product)
                 .basePrice(dto.getBasePrice())
-                .taxPercentage(dto.getTaxPercentage())
-                .discountPercentage(dto.getDiscountPercentage())
-                .discountCategory(dto.getDiscountCategory())
                 .effectiveDate(dto.getEffectiveDate())
                 .build();
 
@@ -48,6 +41,6 @@ public class ProductPriceService {
     }
 
     public void delete(Long id) {
-        productRepository.deleteById(id);
+        productPriceRepository.deleteById(id);
     }
 }

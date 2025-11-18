@@ -11,15 +11,12 @@ public class ProductPriceMapper {
         dto.setProductId(entity.getProduct().getProductId());
         dto.setProductName(entity.getProduct().getProductName());
         dto.setProductCode(entity.getProduct().getProductCode());
-
+        dto.setProductSize(entity.getProduct().getProductSize());
+        dto.setProductImgUrl(entity.getProduct().getProductImgUrl());
+        dto.setStocks(entity.getProduct().getStocks());
+        dto.setCategoryName(entity.getProduct().getCategory().getCategoryName());
         dto.setBasePrice(entity.getBasePrice());
-        dto.setTaxPercentage(entity.getTaxPercentage());
-        dto.setDiscountPercentage(entity.getDiscountPercentage());
-        dto.setDiscountCategory(entity.getDiscountCategory());
         dto.setEffectiveDate(entity.getEffectiveDate());
-
-        dto.setComputedFinalPrice(entity.getComputedFinalPrice());
-
         return dto;
     }
 }
