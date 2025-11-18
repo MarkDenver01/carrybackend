@@ -1,7 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -19,36 +18,41 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "product")
 public class Product {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Long productId;
+
     @NotBlank
     @Size(max = 50)
-    @Column(name = "product_code")
+    @Column(name = "product_code", nullable = false, unique = true)
     private String productCode;
 
     @NotBlank
     @Size(max = 255)
-    @Column(name = "product_name")
+    @Column(name = "product_name", nullable = false)
     private String productName;
 
     @NotBlank
     @Size(max = 255)
-    @Column(name = "product_description")
+    @Column(name = "product_description", nullable = false)
     private String productDescription;
 
-    @Column(name = "stocks")
+    @Column(name = "stocks", nullable = false)
     private int stocks;
 
     @NotBlank
     @Size(max = 50)
-    @Column(name = "product_size")
+    @Column(name = "product_size", nullable = false)
     private String productSize;
+
+    @Column(name = "product_status")
     private String productStatus;
 
     @NotBlank
     @Size(max = 255)
-    @Column(name = "product_img_url")
+    @Column(name = "product_img_url", nullable = false)
     private String productImgUrl;
 
     @JsonFormat(pattern = "MMM dd, yyyy hh:mm a", timezone = "Asia/Manila")
@@ -59,11 +63,16 @@ public class Product {
     @Column(name = "product_in_date")
     private LocalDateTime productInDate;
 
-    @ManyToOne
+    // 🟢 Category Relationship
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private ProductCategory category;
 
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
-    private Price price;
-}
+    // 🟢 Prices Relationship (One product → many prices)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductPrice> productPrices = new ArrayList<>();
 
+    // 🟢 Recommendation Rules (One product → many rules where this product is the base)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecommendationRule> recommendationRules = new ArrayList<>();
+}

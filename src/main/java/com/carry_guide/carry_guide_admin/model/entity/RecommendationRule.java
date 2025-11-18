@@ -17,16 +17,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecommendationRule {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // WHEN product is selected
+    // 🟢 The base product
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    // Recommended Products (Many-to-Many)
+    // 🟢 Recommended products (many-to-many)
     @ManyToMany
     @JoinTable(
             name = "recommendation_rule_items",
