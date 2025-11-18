@@ -10,6 +10,7 @@ public class ProductPriceMapper {
         dto.setPriceId(entity.getPriceId());
         dto.setProductId(entity.getProduct().getProductId());
         dto.setProductName(entity.getProduct().getProductName());
+        dto.setProduceDescription(entity.getProduct().getProductDescription());
         dto.setProductCode(entity.getProduct().getProductCode());
         dto.setProductSize(entity.getProduct().getProductSize());
         dto.setProductImgUrl(entity.getProduct().getProductImgUrl());
