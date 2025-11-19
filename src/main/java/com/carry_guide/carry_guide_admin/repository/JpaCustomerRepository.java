@@ -12,4 +12,7 @@ public interface JpaCustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByUser_UserId(Long userId);
 
     Optional<Customer> findByUser(User user);
+
+    boolean existsByMobileNumber(String mobileNumber);
+    boolean existsByEmail(String email);
 }
