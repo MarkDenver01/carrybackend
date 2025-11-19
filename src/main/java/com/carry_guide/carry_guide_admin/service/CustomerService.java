@@ -90,10 +90,10 @@ public class CustomerService {
         }
 
         // 3. Duplication checks before updating
-        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
-                customerRepository.existsByMobileNumber(req.getMobileNumber())) {
-            throw new IllegalArgumentException("Mobile number already in use.");
-        }
+//        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
+//                customerRepository.existsByMobileNumber(req.getMobileNumber())) {
+//            throw new IllegalArgumentException("Mobile number already in use.");
+//        }
 
 //        if (!customer.getEmail().equals(req.getEmail()) &&
 //                customerRepository.existsByEmail(req.getEmail())) {
