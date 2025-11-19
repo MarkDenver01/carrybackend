@@ -15,10 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @NoArgsConstructor
-@Table(name = "customer_info",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "mobile_number")
-        })
+@Table(name = "customer_info")
 public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
