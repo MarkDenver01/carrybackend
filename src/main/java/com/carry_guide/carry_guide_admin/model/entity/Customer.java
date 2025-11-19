@@ -59,8 +59,8 @@ public class Customer {
     private AccountStatus userAccountStatus;
 
 
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "user_id")
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = true)
     @JsonIgnore
     private User user;
 }
