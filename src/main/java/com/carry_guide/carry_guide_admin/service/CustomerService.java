@@ -95,10 +95,10 @@ public class CustomerService {
             throw new IllegalArgumentException("Mobile number already in use.");
         }
 
-        if (!customer.getEmail().equals(req.getEmail()) &&
-                customerRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already in use.");
-        }
+//        if (!customer.getEmail().equals(req.getEmail()) &&
+//                customerRepository.existsByEmail(req.getEmail())) {
+//            throw new IllegalArgumentException("Email already in use.");
+//        }
 
         // 4. Update fields
         customer.setUserName(req.getUserName());
