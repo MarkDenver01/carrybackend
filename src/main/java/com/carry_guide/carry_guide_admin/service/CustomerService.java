@@ -77,17 +77,22 @@ public class CustomerService {
         // 1. Try identifier as ID
         Customer customer = null;
 
-        if (identifier.matches("\\d+")) {
-            // numeric → treat as ID
+        // 1. Try search by mobile OR email FIRST
+        customer = customerRepository
+                .findByMobileNumberOrEmail(identifier, identifier)
+                .orElse(null);
+
+        // 2. If not found → try ID (only if short length)
+        if (customer == null && identifier.matches("\\d+") && identifier.length() <= 5) {
             Long id = Long.parseLong(identifier);
             customer = customerRepository.findById(id).orElse(null);
         }
 
-        // 2. If not found by ID → search by mobile or email
+        // 3. Still null?
         if (customer == null) {
-            customer = customerRepository.findByMobileNumberOrEmail(identifier, identifier)
-                    .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+            throw new EntityNotFoundException("Customer not found");
         }
+
 
         // 3. Duplication checks before updating
 //        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
