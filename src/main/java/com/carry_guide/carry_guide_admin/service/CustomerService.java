@@ -66,6 +66,55 @@ public class CustomerService {
         return customerMapper.toResponse(c);
     }
 
+    public CustomerDetailResponse findCustomerByMobileOrEmail(String text) {
+        return customerRepository.findByMobileNumberOrEmail(text, text)
+                .map(customerMapper::toResponse)
+                .orElse(null);
+    }
+
+    public CustomerDetailResponse updateCustomerDetails(String identifier, CustomerDetailRequest req) {
+
+        // 1. Try identifier as ID
+        Customer customer = null;
+
+        if (identifier.matches("\\d+")) {
+            // numeric → treat as ID
+            Long id = Long.parseLong(identifier);
+            customer = customerRepository.findById(id).orElse(null);
+        }
+
+        // 2. If not found by ID → search by mobile or email
+        if (customer == null) {
+            customer = customerRepository.findByMobileNumberOrEmail(identifier, identifier)
+                    .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+        }
+
+        // 3. Duplication checks before updating
+        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
+                customerRepository.existsByMobileNumber(req.getMobileNumber())) {
+            throw new IllegalArgumentException("Mobile number already in use.");
+        }
+
+        if (!customer.getEmail().equals(req.getEmail()) &&
+                customerRepository.existsByEmail(req.getEmail())) {
+            throw new IllegalArgumentException("Email already in use.");
+        }
+
+        // 4. Update fields
+        customer.setUserName(req.getUserName());
+        customer.setMobileNumber(req.getMobileNumber());
+        customer.setEmail(req.getEmail());
+        customer.setPhotoUrl(req.getPhotoUrl());
+        customer.setAddress(req.getAddress());
+
+        // 5. Save changes
+        customerRepository.save(customer);
+
+        // 6. Convert to response
+        return customerMapper.toResponse(customer);
+    }
+
+
     public void deleteCustomer(Long id) {
         if (!customerRepository.existsById(id)) {
             throw new EntityNotFoundException("Customer not found");

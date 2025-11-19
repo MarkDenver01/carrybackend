@@ -5,6 +5,7 @@ import com.carry_guide.carry_guide_admin.dto.response.CustomerDetailResponse;
 import com.carry_guide.carry_guide_admin.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,8 +18,9 @@ public class CustomerController {
     CustomerService customerService;
 
     @PostMapping
-    public CustomerDetailResponse createCustomer(@RequestBody CustomerDetailRequest request) {
-        return customerService.createCustomer(request);
+    public ResponseEntity<?> createCustomer(@RequestBody CustomerDetailRequest request) {
+        CustomerDetailResponse response = customerService.createCustomer(request);
+        return ResponseEntity.ok(response);
     }
 
 //    @GetMapping("/{id}")
@@ -27,20 +29,30 @@ public class CustomerController {
 //    }
 
     @GetMapping
-    public List<CustomerDetailResponse> getAllCustomers() {
-        return customerService.getAllCustomers();
+    public ResponseEntity<?> getAllCustomers() {
+        List<CustomerDetailResponse> list = customerService.getAllCustomers();
+        return ResponseEntity.ok().body(list);
     }
 
     @PutMapping("/{id}")
-    public CustomerDetailResponse updateCustomer(
+    public ResponseEntity<?> updateCustomer(
             @PathVariable Long id,
             @RequestBody CustomerDetailRequest request) {
-        return customerService.updateCustomer(id, request);
+        CustomerDetailResponse response = customerService.updateCustomer(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public String delete(@PathVariable Long id) {
         customerService.deleteCustomer(id);
         return "Customer deleted successfully";
+    }
+
+    @PutMapping("/customer/update/{identifier}")
+    public ResponseEntity<CustomerDetailResponse> updateCustomer(
+            @PathVariable String identifier,
+            @RequestBody CustomerDetailRequest req
+    ) {
+        return ResponseEntity.ok(customerService.updateCustomerDetails(identifier, req));
     }
 }
