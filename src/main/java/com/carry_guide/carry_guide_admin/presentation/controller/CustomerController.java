@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user/public/api/customers")
+@RequestMapping("/user")
 @RequiredArgsConstructor
 public class CustomerController {
     @Autowired
     CustomerService customerService;
 
-    @PostMapping
+    @PostMapping("/public/create/customer")
     public ResponseEntity<?> createCustomer(@RequestBody CustomerDetailRequest request) {
         CustomerDetailResponse response = customerService.createCustomer(request);
         return ResponseEntity.ok(response);
@@ -34,7 +34,7 @@ public class CustomerController {
         return ResponseEntity.ok().body(list);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/public/update/customer/{id}")
     public ResponseEntity<?> updateCustomer(
             @PathVariable Long id,
             @RequestBody CustomerDetailRequest request) {
@@ -42,13 +42,13 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/customer/{id}")
     public String delete(@PathVariable Long id) {
         customerService.deleteCustomer(id);
         return "Customer deleted successfully";
     }
 
-    @PutMapping("/customer/update/{identifier}")
+    @PutMapping("/public/customer/update/{identifier}")
     public ResponseEntity<CustomerDetailResponse> updateCustomer(
             @PathVariable String identifier,
             @RequestBody CustomerDetailRequest req
