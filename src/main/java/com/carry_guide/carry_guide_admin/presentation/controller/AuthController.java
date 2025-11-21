@@ -100,7 +100,7 @@ public class AuthController {
         LoginResponse loginResponse = null;
 
 
-        if ("ADMIN".equals(role)) {
+        if ("ADMIN".equals(role) || "SUB_ADMIN".equals(role)) {
             AdminResponse adminResponse = null;
             if (user.getAdmin() != null) {
                 adminResponse = new AdminResponse(
