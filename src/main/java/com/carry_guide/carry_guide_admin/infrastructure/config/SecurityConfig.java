@@ -83,6 +83,9 @@ public class SecurityConfig {
             Role adminRole = roleRepository.findRoleByRoleState(RoleState.ADMIN)
                     .orElseGet(() -> roleRepository.save(new Role(RoleState.ADMIN)));
 
+            Role subAdminRole = roleRepository.findRoleByRoleState(RoleState.SUB_ADMIN)
+                    .orElseGet(() -> roleRepository.save(new Role(RoleState.SUB_ADMIN)));
+
             if (!userRepository.existsByEmail("wrapandcarry@admin.com")) {
                 User user = new User();
                 user.setUserName("Administrator");
@@ -107,6 +110,32 @@ public class SecurityConfig {
                 admin.setUser(user);
 
                 adminRepository.save(admin);
+            }
+
+            if (!userRepository.existsByEmail("wrapandcarry@subadmin.com")) {
+                User newUser = new User();
+                newUser.setUserName("Sub Admin");
+                newUser.setEmail("wrapandcarry@subadmin.com");
+                newUser.setPassword(passwordEncoder.encode("admin"));
+                newUser.setSignupMethod("email");
+                newUser.setRole(subAdminRole);
+                newUser.setMobileNumber("09621531668");
+                userRepository.save(newUser);
+
+                Admin subAdmin = new Admin();
+                subAdmin.setUserName(newUser.getUserName());
+                subAdmin.setEmail(newUser.getEmail());
+                subAdmin.setAccountStatus(AccountStatus.VERIFIED);
+
+                // LocalDate -> LocalDateTime change handled here
+                subAdmin.setCreatedDate(LocalDateTime.now());
+
+                // profileUrl column exists now; set to null or a default if desired
+                subAdmin.setProfileUrl(null);
+
+                subAdmin.setUser(newUser);
+
+                adminRepository.save(subAdmin);
             }
         };
     }
