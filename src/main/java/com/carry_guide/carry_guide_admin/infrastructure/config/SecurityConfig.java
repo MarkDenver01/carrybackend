@@ -157,7 +157,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/csrf_token").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
-                        .requestMatchers("/api/gmail/oauth2/callback").permitAll()
+                        .requestMatchers("/api/gmail/oauth2/**").permitAll()
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/upload/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
