@@ -74,48 +74,50 @@ public class CustomerService {
                 .orElse(null);
     }
 
+
     public CustomerDetailResponse updateCustomerDetails(CustomerDetailRequest req) {
 
+        // 1. Find user by email OR mobile (whichever is present)
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseGet(() ->
                         userRepository.findByMobileNumber(req.getMobileNumber())
-                                .orElseThrow(() -> new EntityNotFoundException("Customer not found"))
+                                .orElseThrow(() ->
+                                        new EntityNotFoundException("Customer not found")
+                                )
                 );
 
-        // SAFE DUPLICATION CHECKS
-        if (!Objects.equals(user.getEmail(), req.getEmail()) &&
-                userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already in use.");
+        // 2. Find or create customer record
+        Customer customer = customerRepository.findByUser(user)
+                .orElseGet(() -> {
+                    Customer newCustomer = new Customer();
+                    newCustomer.setUser(user);
+                    newCustomer.setCreatedDate(LocalDateTime.now());
+                    newCustomer.setUserAccountStatus(AccountStatus.VERIFIED);
+                    return newCustomer;
+                });
+
+        // 3. Update USER fields safely
+        if (!Objects.equals(user.getEmail(), req.getEmail())) {
+            user.setEmail(req.getEmail());
         }
 
-        if (!Objects.equals(user.getMobileNumber(), req.getMobileNumber()) &&
-                userRepository.existsByMobileNumber(req.getMobileNumber())) {
-            throw new IllegalArgumentException("Mobile number already in use.");
+        if (!Objects.equals(user.getMobileNumber(), req.getMobileNumber())) {
+            user.setMobileNumber(req.getMobileNumber());
         }
 
-        Customer customer = customerRepository.findByUser(user).orElse(null);
-
-        if (customer == null) {
-            customer = new Customer();
-            customer.setUser(user);
-            customer.setCreatedDate(LocalDateTime.now());
-            customer.setUserAccountStatus(AccountStatus.VERIFIED);
-        }
-
-        // UPDATE USER
-        user.setEmail(req.getEmail());
-        user.setMobileNumber(req.getMobileNumber());
         user.setUserName(req.getUserName());
         userRepository.save(user);
 
-        // UPDATE CUSTOMER
-        customer.setUserName(user.getUserName());
-        customer.setEmail(user.getEmail());
-        customer.setMobileNumber(user.getMobileNumber());
+        // 4. Update CUSTOMER fields safely
+        customer.setUserName(req.getUserName());
+        customer.setEmail(req.getEmail());
+        customer.setMobileNumber(req.getMobileNumber());
         customer.setAddress(req.getAddress());
         customer.setPhotoUrl(req.getPhotoUrl());
+
         customerRepository.save(customer);
 
         return customerMapper.toResponse(customer);
     }
+
 }
