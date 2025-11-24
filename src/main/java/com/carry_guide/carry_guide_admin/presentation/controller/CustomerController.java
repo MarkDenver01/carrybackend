@@ -2,6 +2,7 @@ package com.carry_guide.carry_guide_admin.presentation.controller;
 
 import com.carry_guide.carry_guide_admin.dto.request.CustomerDetailRequest;
 import com.carry_guide.carry_guide_admin.dto.response.CustomerDetailResponse;
+import com.carry_guide.carry_guide_admin.dto.response.UploadPhotoResponse;
 import com.carry_guide.carry_guide_admin.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,10 +58,10 @@ public class CustomerController {
     }
 
     @PostMapping(value = "/public/customer/upload-photo", consumes = "multipart/form-data")
-    public ResponseEntity<String> uploadCustomerPhoto(
+    public ResponseEntity<UploadPhotoResponse> uploadCustomerPhoto(
             @RequestParam("file") MultipartFile file
     ) {
         String url = customerService.uploadCustomerPhoto(file);
-        return ResponseEntity.ok(url);
+        return ResponseEntity.ok(new UploadPhotoResponse(url));
     }
 }

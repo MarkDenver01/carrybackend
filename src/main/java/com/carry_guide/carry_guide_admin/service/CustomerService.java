@@ -143,7 +143,7 @@ public class CustomerService {
             file.transferTo(destination);
 
             // Return public URL for Render static serving
-            return "/upload/customer/" + fileName;
+            return "https://your-render-url.onrender.com/upload/customer/" + fileName;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload customer photo", e);
