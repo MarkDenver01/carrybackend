@@ -1,38 +1,39 @@
 package com.carry_guide.carry_guide_admin.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class FileStorageService {
 
     @Value("${app.upload.folder.driver}")
-    private String driverFolder;
+    private String uploadDriverFolder; // ex: C:/uploads/driver
 
-    public String saveFile(MultipartFile file) {
+    public String saveDriverFile(MultipartFile file) {
         try {
-            if (file == null || file.isEmpty()) {
-                return null;
-            }
+            if (file == null || file.isEmpty()) return null;
 
-            // Create directory if not exists
-            Files.createDirectories(Paths.get(driverFolder));
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path folderPath = Paths.get(uploadDriverFolder);
 
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            String filePath = driverFolder + "/" + fileName;
+            if (!Files.exists(folderPath))
+                Files.createDirectories(folderPath);
 
-            file.transferTo(new File(filePath));
+            Path filePath = folderPath.resolve(fileName);
+            file.transferTo(filePath.toFile());
 
-            // Return static URL path (example)
-            return "/upload/driver/" + fileName;
-
+            return "/upload/driver/" + fileName; // URL returned
         } catch (Exception e) {
-            throw new RuntimeException("Failed to save file", e);
+            throw new RuntimeException("Error saving file: " + e.getMessage());
         }
     }
 }

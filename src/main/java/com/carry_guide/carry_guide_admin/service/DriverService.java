@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class DriverService {
 
-    private final JpaDriverRepository driverRepository;
-    private final FileStorageService fileStorageService;
+    @Autowired
+    JpaDriverRepository driverRepository;
+
+    @Autowired
+    FileStorageService fileStorageService;
 
     public Driver registerDriver(DriverRequest request) {
 
@@ -29,9 +31,9 @@ public class DriverService {
         driver.setDriversLicenseNumber(request.getDriversLicenseNumber());
 
         // Save images
-        driver.setPhotoUrl(fileStorageService.saveFile(request.getPhotoFile()));
-        driver.setFrontIdUrl(fileStorageService.saveFile(request.getFrontIdFile()));
-        driver.setBackIdUrl(fileStorageService.saveFile(request.getBackIdFile()));
+        driver.setPhotoUrl(fileStorageService.saveDriverFile(request.getPhotoFile()));
+        driver.setFrontIdUrl(fileStorageService.saveDriverFile(request.getFrontIdFile()));
+        driver.setBackIdUrl(fileStorageService.saveDriverFile(request.getBackIdFile()));
 
         return driverRepository.save(driver);
     }
