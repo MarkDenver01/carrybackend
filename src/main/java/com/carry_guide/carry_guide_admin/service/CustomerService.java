@@ -73,49 +73,31 @@ public class CustomerService {
     }
 
     public CustomerDetailResponse updateCustomerDetails(String identifier, CustomerDetailRequest req) {
-
-        // 1. Try identifier as ID
-        Customer customer = null;
-
-        // 1. Try search by mobile OR email FIRST
-        customer = customerRepository
+        Customer customer = customerRepository
                 .findByMobileNumberOrEmail(identifier, identifier)
-                .orElse(null);
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
 
-        // 2. If not found → try ID (only if short length)
-        if (customer == null && identifier.matches("\\d+") && identifier.length() <= 5) {
-            Long id = Long.parseLong(identifier);
-            customer = customerRepository.findById(id).orElse(null);
+        if (!customer.getEmail().equals(req.getEmail()) &&
+                customerRepository.existsByEmail(req.getEmail())) {
+            throw new IllegalArgumentException("Email already in use.");
         }
 
-        // 3. Still null?
-        if (customer == null) {
-            throw new EntityNotFoundException("Customer not found");
+        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
+                customerRepository.existsByMobileNumber(req.getMobileNumber())) {
+            throw new IllegalArgumentException("Mobile number already in use.");
         }
 
-
-        // 3. Duplication checks before updating
-//        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
-//                customerRepository.existsByMobileNumber(req.getMobileNumber())) {
-//            throw new IllegalArgumentException("Mobile number already in use.");
-//        }
-
-//        if (!customer.getEmail().equals(req.getEmail()) &&
-//                customerRepository.existsByEmail(req.getEmail())) {
-//            throw new IllegalArgumentException("Email already in use.");
-//        }
-
-        // 4. Update fields
+        // 4. UPDATE customer fields
         customer.setUserName(req.getUserName());
         customer.setMobileNumber(req.getMobileNumber());
         customer.setEmail(req.getEmail());
         customer.setPhotoUrl(req.getPhotoUrl());
         customer.setAddress(req.getAddress());
 
-        // 5. Save changes
+        // 5. SAVE
         customerRepository.save(customer);
 
-        // 6. Convert to response
+        // 6. RETURN RESPONSE
         return customerMapper.toResponse(customer);
     }
 
