@@ -9,7 +9,11 @@ import java.util.Optional;
 
 @Repository
 public interface JpaDriverRepository extends JpaRepository<Driver, Long> {
-    Optional<Driver> findByUser_UserId(Long userId);
 
+    // EXISTING METHODS - keep them
+    Optional<Driver> findByUser_UserId(Long userId);
     Optional<Driver> findByUser(User user);
+
+    // NEW METHOD - needed for validation during driver registration
+    boolean existsByMobileNumber(String mobileNumber);
 }
