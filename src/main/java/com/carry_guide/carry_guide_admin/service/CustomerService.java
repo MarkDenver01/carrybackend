@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -75,28 +76,25 @@ public class CustomerService {
 
     public CustomerDetailResponse updateCustomerDetails(CustomerDetailRequest req) {
 
-        // 1️⃣ FIND USER (email or mobile)
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseGet(() ->
                         userRepository.findByMobileNumber(req.getMobileNumber())
                                 .orElseThrow(() -> new EntityNotFoundException("Customer not found"))
                 );
 
-        // 2️⃣ DUPLICATION CHECKS (User-level)
-        if (!user.getEmail().equals(req.getEmail()) &&
+        // SAFE DUPLICATION CHECKS
+        if (!Objects.equals(user.getEmail(), req.getEmail()) &&
                 userRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already in use.");
         }
 
-        if (!user.getMobileNumber().equals(req.getMobileNumber()) &&
+        if (!Objects.equals(user.getMobileNumber(), req.getMobileNumber()) &&
                 userRepository.existsByMobileNumber(req.getMobileNumber())) {
             throw new IllegalArgumentException("Mobile number already in use.");
         }
 
-        // 3️⃣ FIND CUSTOMER RECORD
         Customer customer = customerRepository.findByUser(user).orElse(null);
 
-        // 4️⃣ CREATE NEW CUSTOMER IF NOT EXISTING
         if (customer == null) {
             customer = new Customer();
             customer.setUser(user);
@@ -104,13 +102,13 @@ public class CustomerService {
             customer.setUserAccountStatus(AccountStatus.VERIFIED);
         }
 
-        // 5️⃣ UPDATE USER DATA
+        // UPDATE USER
         user.setEmail(req.getEmail());
         user.setMobileNumber(req.getMobileNumber());
         user.setUserName(req.getUserName());
         userRepository.save(user);
 
-        // 6️⃣ UPDATE CUSTOMER PROFILE DATA
+        // UPDATE CUSTOMER
         customer.setUserName(user.getUserName());
         customer.setEmail(user.getEmail());
         customer.setMobileNumber(user.getMobileNumber());
@@ -118,14 +116,6 @@ public class CustomerService {
         customer.setPhotoUrl(req.getPhotoUrl());
         customerRepository.save(customer);
 
-        // 7️⃣ RETURN RESPONSE
         return customerMapper.toResponse(customer);
-    }
-
-    public void deleteCustomer(Long id) {
-        if (!customerRepository.existsById(id)) {
-            throw new EntityNotFoundException("Customer not found");
-        }
-        customerRepository.deleteById(id);
     }
 }
