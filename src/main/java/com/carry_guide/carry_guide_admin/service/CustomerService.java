@@ -11,9 +11,12 @@ import com.carry_guide.carry_guide_admin.repository.JpaCustomerRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +24,9 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
+    @Value("${app.upload.folder.customer}")
+    private String uploadFolderCustomer;
+
     @Autowired
     JpaCustomerRepository customerRepository;
 
@@ -118,6 +124,30 @@ public class CustomerService {
         customerRepository.save(customer);
 
         return customerMapper.toResponse(customer);
+    }
+
+    public String uploadCustomerPhoto(MultipartFile file) {
+
+        try {
+            // Ensure directory exists
+            File dir = new File(uploadFolderCustomer);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // Generate filename
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            File destination = new File(dir, fileName);
+
+            // Store file
+            file.transferTo(destination);
+
+            // Return public URL for Render static serving
+            return "/upload/customer/" + fileName;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload customer photo", e);
+        }
     }
 
     public void deleteCustomer(Long id) {

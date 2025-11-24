@@ -18,6 +18,9 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     @Value("${app.upload.folder.driver}")
     private String uploadFolderDriver;
 
+    @Value("${app.upload.folder.customer}")
+    private String uploadFolderCustomer;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
@@ -28,5 +31,8 @@ public class StaticResourceConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/upload/driver/**")
                 .addResourceLocations("file:" + driverUploadPath + "/");
+
+        registry.addResourceHandler("/upload/customer/**")
+                .addResourceLocations("file:" + Paths.get(uploadFolderCustomer).toAbsolutePath() + "/");
     }
 }

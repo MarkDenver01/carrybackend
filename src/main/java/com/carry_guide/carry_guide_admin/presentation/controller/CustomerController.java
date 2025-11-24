@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -53,5 +54,13 @@ public class CustomerController {
             @RequestBody CustomerDetailRequest req
     ) {
         return ResponseEntity.ok(customerService.updateCustomerDetails(req));
+    }
+
+    @PostMapping(value = "/public/customer/upload-photo", consumes = "multipart/form-data")
+    public ResponseEntity<String> uploadCustomerPhoto(
+            @RequestParam("file") MultipartFile file
+    ) {
+        String url = customerService.uploadCustomerPhoto(file);
+        return ResponseEntity.ok(url);
     }
 }
