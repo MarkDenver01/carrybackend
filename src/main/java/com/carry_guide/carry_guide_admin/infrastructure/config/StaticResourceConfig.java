@@ -18,10 +18,17 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     @Value("${app.upload.folder}")
     private String uploadFolder;
 
+    @Value("${app.upload.folder.driver}")
+    private String uploadFolderDriver;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         log.debug("register - addResourceHandlers");
         registry.addResourceHandler("/upload/product/**")
                 .addResourceLocations("file:" + uploadFolder + "/");
+
+        // Driver images (photo, front ID, back ID)
+        registry.addResourceHandler("/upload/drivers/**")
+                .addResourceLocations("file:" + uploadFolderDriver + "/");
     }
 }

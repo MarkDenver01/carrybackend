@@ -19,7 +19,7 @@ public class RecommendationRuleController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody RecommendationRuleRequest req) {
         return ResponseEntity.ok(ruleService.createRule(req));
-    }
+    } 
 
     @GetMapping
     public ResponseEntity<?> all() {
