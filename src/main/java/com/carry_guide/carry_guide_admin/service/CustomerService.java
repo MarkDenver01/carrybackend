@@ -72,11 +72,18 @@ public class CustomerService {
                 .orElse(null);
     }
 
-    public CustomerDetailResponse updateCustomerDetails(String identifier, CustomerDetailRequest req) {
-        Customer customer = customerRepository
-                .findByMobileNumberOrEmail(identifier, identifier)
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+    public CustomerDetailResponse updateCustomerDetails(CustomerDetailRequest req) {
 
+        Customer customer =
+                customerRepository.findByEmail(req.getEmail())
+                        .orElseGet(() ->
+                                customerRepository.findByMobileNumber(req.getMobileNumber())
+                                        .orElseThrow(() ->
+                                                new EntityNotFoundException("Customer not found")
+                                        )
+                        );
+
+        // DUPLICATION CHECKS
         if (!customer.getEmail().equals(req.getEmail()) &&
                 customerRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already in use.");
@@ -87,19 +94,18 @@ public class CustomerService {
             throw new IllegalArgumentException("Mobile number already in use.");
         }
 
-        // 4. UPDATE customer fields
+        // UPDATE FIELDS
         customer.setUserName(req.getUserName());
         customer.setMobileNumber(req.getMobileNumber());
         customer.setEmail(req.getEmail());
         customer.setPhotoUrl(req.getPhotoUrl());
         customer.setAddress(req.getAddress());
 
-        // 5. SAVE
         customerRepository.save(customer);
 
-        // 6. RETURN RESPONSE
         return customerMapper.toResponse(customer);
     }
+
 
 
     public void deleteCustomer(Long id) {

@@ -48,11 +48,10 @@ public class CustomerController {
         return "Customer deleted successfully";
     }
 
-    @PutMapping("/public/customer/update/{identifier}")
+    @PutMapping("/public/customer/update")
     public ResponseEntity<CustomerDetailResponse> updateCustomer(
-            @PathVariable String identifier,
             @RequestBody CustomerDetailRequest req
     ) {
-        return ResponseEntity.ok(customerService.updateCustomerDetails(identifier, req));
+        return ResponseEntity.ok(customerService.updateCustomerDetails(req));
     }
 }
