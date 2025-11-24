@@ -120,4 +120,11 @@ public class CustomerService {
         return customerMapper.toResponse(customer);
     }
 
+    public void deleteCustomer(Long id) {
+        if (!customerRepository.existsById(id)) {
+            throw new EntityNotFoundException("Customer not found");
+        }
+        customerRepository.deleteById(id);
+    }
+
 }
