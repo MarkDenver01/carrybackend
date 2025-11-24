@@ -6,6 +6,7 @@ import com.carry_guide.carry_guide_admin.dto.request.CustomerDetailRequest;
 import com.carry_guide.carry_guide_admin.dto.response.CustomerDetailResponse;
 import com.carry_guide.carry_guide_admin.dto.response.CustomerResponse;
 import com.carry_guide.carry_guide_admin.model.entity.Customer;
+import com.carry_guide.carry_guide_admin.model.entity.User;
 import com.carry_guide.carry_guide_admin.repository.JpaCustomerRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -74,33 +75,33 @@ public class CustomerService {
 
     public CustomerDetailResponse updateCustomerDetails(CustomerDetailRequest req) {
 
-        Customer customer =
-                customerRepository.findByEmail(req.getEmail())
-                        .orElseGet(() ->
-                                customerRepository.findByMobileNumber(req.getMobileNumber())
-                                        .orElseThrow(() ->
-                                                new EntityNotFoundException("Customer not found")
-                                        )
-                        );
+        User user = userRepository.findByEmail(req.getEmail())
+                .orElseGet(() ->
+                        userRepository.findByMobileNumber(req.getMobileNumber())
+                                .orElseThrow(() ->
+                                        new EntityNotFoundException("Customer not found")
+                                )
+                );
 
-        // DUPLICATION CHECKS
-        if (!customer.getEmail().equals(req.getEmail()) &&
-                customerRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already in use.");
+        Customer customer = customerRepository.findByUser(user).orElse(null);
+
+        if (customer == null) {
+            customer = new Customer();
+            customer.setUser(user);
+            customer.setCreatedDate(LocalDateTime.now());
+            customer.setUserAccountStatus(AccountStatus.VERIFIED);
         }
 
-        if (!customer.getMobileNumber().equals(req.getMobileNumber()) &&
-                customerRepository.existsByMobileNumber(req.getMobileNumber())) {
-            throw new IllegalArgumentException("Mobile number already in use.");
-        }
+        user.setEmail(req.getEmail());
+        user.setMobileNumber(req.getMobileNumber());
+        user.setUserName(req.getUserName());
+        userRepository.save(user);
 
-        // UPDATE FIELDS
         customer.setUserName(req.getUserName());
         customer.setMobileNumber(req.getMobileNumber());
         customer.setEmail(req.getEmail());
-        customer.setPhotoUrl(req.getPhotoUrl());
         customer.setAddress(req.getAddress());
-
+        customer.setPhotoUrl(req.getPhotoUrl());
         customerRepository.save(customer);
 
         return customerMapper.toResponse(customer);
