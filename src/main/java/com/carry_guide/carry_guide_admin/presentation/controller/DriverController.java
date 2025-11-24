@@ -18,6 +18,15 @@ public class DriverController {
     // 🔥 Driver registration endpoint
     @PostMapping(value = "/api/driver/register", consumes = "multipart/form-data")
     public Driver registerDriver(@ModelAttribute DriverRequest request) {
+
+        System.out.println("🔥🔥🔥 CONTROLLER HIT: /admin/api/driver/register");
+        System.out.println("userName = " + request.getUserName());
+        System.out.println("email = " + request.getEmail());
+        System.out.println("mobile = " + request.getMobileNumber());
+        System.out.println("photoFile = " + (request.getPhotoFile() != null ? request.getPhotoFile().getOriginalFilename() : "NULL"));
+        System.out.println("frontIdFile = " + (request.getFrontIdFile() != null ? request.getFrontIdFile().getOriginalFilename() : "NULL"));
+        System.out.println("backIdFile = " + (request.getBackIdFile() != null ? request.getBackIdFile().getOriginalFilename() : "NULL"));
+
         return driverService.registerDriver(request);
     }
 }
