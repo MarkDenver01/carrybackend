@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class CashInRequest {
-    private BigDecimal amount;
-    private String email;        // or
-    private String mobileNumber; // either one should be fille
+    private Long userId;       // ID ng user sa system mo
+    private Long amount;       // amount in PHP (ex: 100 for ₱100)
+    private String email;      // optional but recommended for invoice
 }

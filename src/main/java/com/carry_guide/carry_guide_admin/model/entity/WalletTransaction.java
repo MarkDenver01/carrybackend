@@ -3,24 +3,30 @@ package com.carry_guide.carry_guide_admin.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "wallets")
+@Table(name = "wallet_transactions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Wallet {
+public class WalletTransaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long userId;
 
-    private Long balance; // in PHP, or cents if gusto mo
+    // this will match Xendit external_id
+    @Column(unique = true)
+    private String externalId;
+
+    private Long amount;
+
+    // PENDING, PAID, EXPIRED, PAID_AFTER_EXPIRY
+    private String status;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -29,9 +35,6 @@ public class Wallet {
     public void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
-        if (balance == null) {
-            balance = 0L;
-        }
     }
 
     @PreUpdate
