@@ -21,8 +21,13 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     @Value("${app.upload.folder.customer}")
     private String uploadFolderCustomer;
 
+    @Value("${app.upload.folder}")
+    private String uploadFolder;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/upload/product/**")
+                .addResourceLocations("file:" + uploadFolder + "/");
 
         // Convert relative path (uploads/drivers) → absolute path
         Path driverUploadPath = Paths.get(uploadFolderDriver).toAbsolutePath();
