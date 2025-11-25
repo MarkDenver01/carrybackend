@@ -3,6 +3,7 @@ package com.carry_guide.carry_guide_admin.service;
 
 import com.carry_guide.carry_guide_admin.dto.request.wallet.CashInRequest;
 import com.carry_guide.carry_guide_admin.dto.response.wallet.CashInInitResponse;
+import com.carry_guide.carry_guide_admin.dto.response.wallet.WalletResponse;
 import com.carry_guide.carry_guide_admin.dto.response.wallet.XenditInvoiceResponse;
 import com.carry_guide.carry_guide_admin.model.entity.Wallet;
 import com.carry_guide.carry_guide_admin.model.entity.WalletTransaction;
@@ -88,5 +89,18 @@ public class WalletService {
         } else if ("PAID_AFTER_EXPIRY".equals(status)) {
             System.out.println("⚠ Paid after expiry externalId=" + externalId);
         }
+    }
+
+    public WalletResponse getWalletBalance(Long userId) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    // create wallet automatically if not found
+                    Wallet w = new Wallet();
+                    w.setUserId(userId);
+                    w.setBalance(0L);
+                    return walletRepository.save(w);
+                });
+
+        return new WalletResponse(wallet.getUserId(), wallet.getBalance());
     }
 }
