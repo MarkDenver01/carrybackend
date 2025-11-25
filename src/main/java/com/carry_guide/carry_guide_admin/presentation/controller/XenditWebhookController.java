@@ -12,50 +12,67 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.BufferedReader;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/xendit")
 public class XenditWebhookController {
+
     @Value("${xendit.callback-token}")
     private String callbackToken;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     @PostMapping("/webhook")
-    public ResponseEntity<String> handleWebhook(HttpServletRequest request) {
+    public ResponseEntity<String> handleXenditInvoiceWebhook(HttpServletRequest request) {
         try {
+            // Read body
             StringBuilder rawBody = new StringBuilder();
             BufferedReader reader = request.getReader();
             String line;
-
             while ((line = reader.readLine()) != null) {
                 rawBody.append(line);
             }
 
+            // Validate callback token
             String token = request.getHeader("x-callback-token");
-            if (!callbackToken.equals(token)) {
-                return ResponseEntity.status(401).body("Invalid callback token");
+            if (token == null || !token.equals(callbackToken)) {
+                return ResponseEntity.status(401).body("Invalid Xendit callback token");
             }
 
+            // Parse JSON
             var json = mapper.readTree(rawBody.toString());
-            String event = json.get("event").asText();
+            System.out.println("📩 XENDIT WEBHOOK RECEIVED:");
+            System.out.println(rawBody);
 
-            System.out.println("🔔 XENDIT WEBHOOK EVENT: " + event);
-            System.out.println("RAW: " + rawBody);
+            // Extract fields
+            String status = json.get("status").asText();
+            String externalId = json.get("external_id").asText();
+            int amount = json.get("paid_amount").asInt();
 
-            if ("ewallet.completed".equals(event)) {
-                String referenceId = json.get("data").get("reference_id").asText();
-                int amount = json.get("data").get("charge").get("amount").asInt();
+            // Handle statuses
+            switch (status) {
+                case "PAID":
+                    System.out.println("💰 Invoice PAID: " + externalId + " amount: " + amount);
+                    // TODO: update wallet / order
+                    break;
 
-                // TODO: credit to wallet
-                System.out.println("CREDIT WALLET: " + referenceId + " amount: " + amount);
+                case "EXPIRED":
+                    System.out.println("⏳ Invoice EXPIRED: " + externalId);
+                    // TODO: mark expired
+                    break;
+
+                case "PAID_AFTER_EXPIRY":
+                    System.out.println("⚠ Paid after expiry: " + externalId);
+                    // TODO: handle late payment
+                    break;
+
+                default:
+                    System.out.println("⚠ Unhandled invoice status: " + status);
             }
 
-            return ResponseEntity.ok("OK");
+            return ResponseEntity.ok("Webhook received");
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("WEBHOOK ERROR");
         }
     }
-
 }
