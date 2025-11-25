@@ -18,9 +18,10 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
+    @Column(unique = true)
+    private String mobileNumber;
 
-    private Long balance; // in PHP, or cents if gusto mo
+    private Long balance;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -29,9 +30,7 @@ public class Wallet {
     public void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
-        if (balance == null) {
-            balance = 0L;
-        }
+        if (balance == null) balance = 0L;
     }
 
     @PreUpdate

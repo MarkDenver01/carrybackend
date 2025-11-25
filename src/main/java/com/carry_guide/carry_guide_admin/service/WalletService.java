@@ -20,10 +20,10 @@ public class WalletService {
     private final JpaWalletTransactionRepository walletTransactionRepository;
     private final XenditService xenditService;
 
+
     @Transactional
     public CashInInitResponse initiateCashIn(CashInRequest request) {
-        // external_id must be unique in Xendit
-        String externalId = "cashin_" + request.getUserId() + "_" + System.currentTimeMillis();
+        String externalId = "cashin_" + request.getMobileNumber() + "_" + System.currentTimeMillis();
 
         XenditInvoiceResponse invoice = xenditService.createGcashInvoice(
                 externalId,
@@ -31,9 +31,8 @@ public class WalletService {
                 request.getEmail()
         );
 
-        // Save transaction as PENDING
         WalletTransaction tx = WalletTransaction.builder()
-                .userId(request.getUserId())
+                .mobileNumber(request.getMobileNumber())
                 .externalId(externalId)
                 .amount(request.getAmount())
                 .status("PENDING")
@@ -55,13 +54,11 @@ public class WalletService {
                 .orElse(null);
 
         if (tx == null) {
-            System.out.println("⚠ No matching wallet transaction for external_id: " + externalId);
+            System.out.println("⚠ No matching wallet transaction: " + externalId);
             return;
         }
 
-        // Avoid double processing
         if ("PAID".equals(tx.getStatus())) {
-            System.out.println("⚠ Transaction already PAID, skipping: " + externalId);
             return;
         }
 
@@ -69,38 +66,35 @@ public class WalletService {
         walletTransactionRepository.save(tx);
 
         if ("PAID".equals(status)) {
-            Wallet wallet = walletRepository.findByUserId(tx.getUserId())
-                    .orElseGet(() -> {
-                        Wallet w = new Wallet();
-                        w.setUserId(tx.getUserId());
-                        w.setBalance(0L);
-                        return walletRepository.save(w);
-                    });
+
+            Wallet wallet = walletRepository.findByMobileNumber(tx.getMobileNumber())
+                    .orElseGet(() ->
+                            walletRepository.save(
+                                    Wallet.builder()
+                                            .mobileNumber(tx.getMobileNumber())
+                                            .balance(0L)
+                                            .build()
+                            ));
 
             Long newBalance = wallet.getBalance() + paidAmount;
             wallet.setBalance(newBalance);
+
             walletRepository.save(wallet);
 
-            System.out.println("💰 WALLET CREDITED userId=" + wallet.getUserId()
-                    + " amount=" + paidAmount
-                    + " newBalance=" + newBalance);
-        } else if ("EXPIRED".equals(status)) {
-            System.out.println("⏳ Cash-in expired for externalId=" + externalId);
-        } else if ("PAID_AFTER_EXPIRY".equals(status)) {
-            System.out.println("⚠ Paid after expiry externalId=" + externalId);
+            System.out.println("💰 Wallet credited: " + tx.getMobileNumber() + " new balance: " + newBalance);
         }
     }
 
-    public WalletResponse getWalletBalance(Long userId) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    // create wallet automatically if not found
-                    Wallet w = new Wallet();
-                    w.setUserId(userId);
-                    w.setBalance(0L);
-                    return walletRepository.save(w);
-                });
+    public WalletResponse getWalletBalance(String mobileNumber) {
+        Wallet wallet = walletRepository.findByMobileNumber(mobileNumber)
+                .orElseGet(() ->
+                        walletRepository.save(
+                                Wallet.builder()
+                                        .mobileNumber(mobileNumber)
+                                        .balance(0L)
+                                        .build()
+                        ));
 
-        return new WalletResponse(wallet.getUserId(), wallet.getBalance());
+        return new WalletResponse(wallet.getMobileNumber(), wallet.getBalance());
     }
 }

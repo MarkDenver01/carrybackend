@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.springframework.http.MediaType;
 
 @Service
@@ -45,7 +46,7 @@ public class XenditService {
         body.put("amount", amount);
         body.put("currency", "PHP");
         body.put("description", "Wallet Cash-in via GCash");
-        body.put("payment_methods", List.of("GCASH")); // IMPORTANT
+        body.put("payment_methods", List.of("GCASH"));
         body.put("success_redirect_url", successRedirectUrl);
         body.put("failure_redirect_url", failedRedirectUrl);
 
@@ -55,12 +56,13 @@ public class XenditService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(secretKey, ""); // Xendit uses basic auth with secret key
+        headers.setBasicAuth(secretKey, "");
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        ResponseEntity<XenditInvoiceResponse> response = restTemplate
-                .exchange(url, HttpMethod.POST, entity, XenditInvoiceResponse.class);
+        ResponseEntity<XenditInvoiceResponse> response = restTemplate.exchange(
+                url, HttpMethod.POST, entity, XenditInvoiceResponse.class
+        );
 
         return response.getBody();
     }

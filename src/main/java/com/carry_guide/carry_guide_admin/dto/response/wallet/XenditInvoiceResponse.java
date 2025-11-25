@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class XenditInvoiceResponse {
-
     private String id;
 
     @JsonProperty("external_id")

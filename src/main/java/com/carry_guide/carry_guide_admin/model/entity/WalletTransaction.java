@@ -17,16 +17,14 @@ public class WalletTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
+    private String mobileNumber;
 
-    // this will match Xendit external_id
     @Column(unique = true)
     private String externalId;
 
     private Long amount;
 
-    // PENDING, PAID, EXPIRED, PAID_AFTER_EXPIRY
-    private String status;
+    private String status; // PENDING, PAID, EXPIRED, PAID_AFTER_EXPIRY
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

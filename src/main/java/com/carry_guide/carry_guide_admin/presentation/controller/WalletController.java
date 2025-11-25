@@ -16,12 +16,11 @@ public class WalletController {
 
     @PostMapping("/cash-in")
     public ResponseEntity<CashInInitResponse> cashIn(@RequestBody CashInRequest request) {
-        CashInInitResponse response = walletService.initiateCashIn(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(walletService.initiateCashIn(request));
     }
 
     @GetMapping("/balance")
-    public ResponseEntity<WalletResponse> getWalletBalance(@RequestParam Long userId) {
-        return ResponseEntity.ok(walletService.getWalletBalance(userId));
+    public ResponseEntity<WalletResponse> getBalance(@RequestParam String mobileNumber) {
+        return ResponseEntity.ok(walletService.getWalletBalance(mobileNumber));
     }
 }

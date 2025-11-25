@@ -42,11 +42,9 @@ public class XenditWebhookController {
 
             var json = mapper.readTree(rawBody.toString());
 
-            System.out.println("📩 XENDIT WEBHOOK RECEIVED:");
-            System.out.println(rawBody);
-
-            String status = json.get("status").asText();          // PAID / EXPIRED / etc.
+            String status = json.get("status").asText();
             String externalId = json.get("external_id").asText();
+
             Long paidAmount = json.has("paid_amount") && !json.get("paid_amount").isNull()
                     ? json.get("paid_amount").asLong()
                     : json.get("amount").asLong();
@@ -54,6 +52,7 @@ public class XenditWebhookController {
             walletService.handleInvoiceWebhook(status, externalId, paidAmount);
 
             return ResponseEntity.ok("Webhook processed");
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("WEBHOOK ERROR");
