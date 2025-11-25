@@ -1,91 +1,71 @@
 package com.carry_guide.carry_guide_admin.service;
 
-import com.carry_guide.carry_guide_admin.dto.response.wallet.CashInInitResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
 public class XenditService {
-    private static final Logger log = LoggerFactory.getLogger(XenditService.class);
-
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @Value("${xendit.secretkey}")
-    private String xenditSecretKey;
+    private String secretKey;
 
-    @Value("${xendit.success-redirecturl}")
-    private String successUrl;
+    @Value("${xendit.baseurl}")
+    private String xenditBaseUrl;
 
-    @Value("${xendit.failed-redirecturl}")
-    private String failureUrl;
+    @Value("${xendit.success.redirect-url}")
+    private String successRedirect;
 
-    public CashInInitResponse createGcashCharge(BigDecimal amount, String customerId) {
-        try {
-            String referenceId = "CASHIN-" + customerId + "-" + UUID.randomUUID();
+    @Value("${xendit.failed.redirect-url}")
+    private String failedRedirect;
 
-            String url = "https://api.xendit.co/ewallets/charges";
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBasicAuth(xenditSecretKey, ""); // secret key as username
+    private final OkHttpClient client = new OkHttpClient();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("reference_id", referenceId);
-            body.put("currency", "PHP");
-            body.put("amount", amount);
+    public JsonNode createGCashPayment(String userId, int amount) throws Exception {
+        String referenceId = "cashin-" + userId + "-" + UUID.randomUUID();
+        String url = xenditBaseUrl + "/ewallets/charges";
 
-            body.put("checkout_method", "ONE_TIME_PAYMENT");
-            body.put("channel_code", "PH_GCASH");
-
-            Map<String, Object> channelProps = new HashMap<>();
-            channelProps.put("success_redirect_url", successUrl);
-            channelProps.put("failure_redirect_url", failureUrl);
-            body.put("channel_properties", channelProps);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-            ResponseEntity<String> response =
-                    restTemplate.postForEntity(url, entity, String.class);
-
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("Xendit ewallet charge failed: {}", response);
-                throw new RuntimeException("Xendit charge failed");
-            }
-
-            JsonNode json = objectMapper.readTree(response.getBody());
-
-            // You may need to adjust depending on actual Xendit response field
-            String checkoutUrl = json.path("actions")
-                    .path("desktop_web_checkout_url")
-                    .asText(null);
-
-            if (checkoutUrl == null || checkoutUrl.isEmpty()) {
-                // fallback
-                checkoutUrl = json.path("checkout_url").asText("");
-            }
-
-            return new CashInInitResponse(checkoutUrl, referenceId);
-
-        } catch (Exception e) {
-            log.error("Error creating Xendit GCash charge", e);
-            throw new RuntimeException("Unable to create Xendit charge", e);
+        // Request JSON body
+        String json = """
+        {
+          "reference_id": "%s",
+          "currency": "PHP",
+          "amount": %d,
+          "checkout_method": "ONE_TIME_PAYMENT",
+          "channel_code": "PH_GCASH",
+          "channel_properties": {
+            "success_redirect_url": "%s",
+            "failure_redirect_url": "%s"
+          },
+          "metadata": {
+            "user_id": "%s"
+          }
         }
+        """.formatted(
+                referenceId,
+                amount,
+                successRedirect,
+                failedRedirect,
+                userId
+        );
+
+        RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
+        String credentials = Credentials.basic(secretKey, "");
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Authorization", credentials)
+                .build();
+
+        Response response = client.newCall(request).execute();
+
+        String responseBody = response.body().string();
+        System.out.println("XENDIT CREATE PAYMENT RESPONSE: " + responseBody);
+
+        return mapper.readTree(responseBody);
     }
 }

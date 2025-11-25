@@ -158,6 +158,8 @@ public class SecurityConfig {
                         .requestMatchers("/csrf_token").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/api/gmail/**").permitAll()
+                        .requestMatchers("/api/xendit/**").permitAll()
+                        .requestMatchers("/api/ewallet/**").permitAll()
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/upload/**").permitAll()
                         .requestMatchers("/upload/driver/**").permitAll()
