@@ -6,6 +6,7 @@ import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
 import com.carry_guide.carry_guide_admin.repository.JpaUserHistoryRepository;
 import com.carry_guide.carry_guide_admin.service.AIRecommendationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,13 +20,27 @@ public class ProductRecommendationController {
 
 
     @PostMapping("/history/save")
-    public UserHistory saveHistory(@RequestBody UserHistoryDTO dto) {
+    public ResponseEntity<?> saveHistory(@RequestBody UserHistoryDTO dto) {
+
+        boolean exists = userHistoryRepository.existsByCustomerIdAndProductKeyword(
+                dto.getCustomerId(),
+                dto.getProductKeyword()
+        );
+
+
+        if (exists) {
+            // Already recorded — SKIP saving
+            return ResponseEntity.ok("Keyword already stored. Skipped saving.");
+        }
+
+        // Save ONLY if not existing
         UserHistory history = UserHistory.builder()
                 .customerId(dto.getCustomerId())
                 .productKeyword(dto.getProductKeyword())
                 .dateTime(dto.getDateTime())
                 .build();
-        return userHistoryRepository.save(history);
+
+        return ResponseEntity.ok(userHistoryRepository.save(history));
     }
 
     @GetMapping("/history/{customerId}")
