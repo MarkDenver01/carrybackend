@@ -2,6 +2,7 @@ package com.carry_guide.carry_guide_admin.presentation.controller;
 
 import com.carry_guide.carry_guide_admin.dto.ProductMapper;
 import com.carry_guide.carry_guide_admin.dto.request.UserHistoryDTO;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductCategoryDTO;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceMapper;
 import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
@@ -11,7 +12,9 @@ import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserHistoryRepository;
 import com.carry_guide.carry_guide_admin.service.AIRecommendationService;
+import com.carry_guide.carry_guide_admin.service.ProductCategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/user/public")
 @RequiredArgsConstructor
 public class ProductRecommendationController {
+
+    @Autowired
+    ProductCategoryService categoryService;
 
     private final JpaUserHistoryRepository userHistoryRepository;
     private final JpaProductRepository productRepository;
@@ -103,10 +109,18 @@ public class ProductRecommendationController {
                 .toList();
     }
 
+
     private ProductPrice getLatestPrice(Product product) {
         return product.getProductPrices().stream()
                 .sorted(Comparator.comparing(ProductPrice::getEffectiveDate).reversed())
                 .findFirst()
                 .orElse(null);
+    }
+
+
+
+    @GetMapping("/all/product_category")
+    public List<ProductCategoryDTO> getAll() {
+        return categoryService.getAll();
     }
 }
