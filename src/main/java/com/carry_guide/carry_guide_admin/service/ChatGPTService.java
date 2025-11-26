@@ -29,61 +29,57 @@ public class ChatGPTService {
     }
 
     /* ============================================================
-       🔹 UNIVERSAL CALLER (NEW API FORMAT)
+       🔹 UNIVERSAL OPENAI CALL — FIXED FOR RESPONSES API
        ============================================================ */
     private String callOpenAi(String prompt) {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openAiKey);
-
-        Map<String, Object> body = Map.of(
-                "model", MODEL,
-                "input", List.of(
-                        Map.of(
-                                "role", "user",
-                                "content", prompt
-                        )
-                ),
-                "temperature", 0.4
-        );
-
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    OPENAI_URL,
-                    HttpMethod.POST,
-                    new HttpEntity<>(body, headers),
-                    Map.class
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(openAiKey);
+
+            Map<String, Object> input = Map.of(
+                    "role", "user",
+                    "content", prompt
             );
 
+            Map<String, Object> body = Map.of(
+                    "model", MODEL,
+                    "input", List.of(input),
+                    "temperature", 0.4
+            );
+
+            ResponseEntity<Map> response =
+                    restTemplate.exchange(
+                            OPENAI_URL,
+                            HttpMethod.POST,
+                            new HttpEntity<>(body, headers),
+                            Map.class
+                    );
+
             if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("❌ OpenAI error status: {}", response.getStatusCode());
+                log.error("❌ OpenAI error: {}", response.getStatusCode());
                 return null;
             }
 
             Map<String, Object> result = response.getBody();
             if (result == null) {
-                log.error("❌ OpenAI returned empty body");
+                log.error("❌ OpenAI returned empty response");
                 return null;
             }
 
-            List<String> texts = (List<String>) result.get("output_text");
+            List<Map<String, Object>> outputList =
+                    (List<Map<String, Object>>) result.get("output_text");
 
-            if (texts == null || texts.isEmpty()) {
-                log.error("❌ OpenAI response missing output_text: {}", result);
+            if (outputList == null || outputList.isEmpty()) {
+                log.error("❌ Missing output_text");
                 return null;
             }
 
-            String raw = texts.get(0).trim();
-
-            raw = raw.replace("```json", "")
-                    .replace("```", "")
-                    .trim();
-
-            return raw;
+            return (String) outputList.get(0).get("content");
 
         } catch (Exception e) {
-            log.error("❌ OpenAI CRASH: {}", e.getMessage());
+            log.error("❌ OpenAI crash: {}", e.getMessage());
             return null;
         }
     }
@@ -98,10 +94,10 @@ public class ChatGPTService {
 
             User interacted with: [%s].
 
-            Translate Tagalog terms → English.
+            Translate Tagalog terms to English.
             Generate up to 10 related product categories.
 
-            Return ONLY comma-separated list.
+            Return ONLY a comma-separated list.
         """.formatted(history);
 
         String out = callOpenAi(prompt);
@@ -115,13 +111,14 @@ public class ChatGPTService {
     }
 
     /* ============================================================
-       🔹 2. RANK PRODUCTS BASED ON HISTORY
+       🔹 2. RANK PRODUCTS
        ============================================================ */
     public List<Long> rankProductsByHistory(
             List<UserHistory> history,
             List<Product> candidates
     ) {
         try {
+
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("history", history.stream().map(h -> Map.of(
                     "productKeyword", h.getProductKeyword(),
@@ -138,12 +135,7 @@ public class ChatGPTService {
             String prompt = """
                 You are an AI product ranking engine.
 
-                Receive:
-                - history
-                - products
-
-                Determine user preference.
-                Rank ALL products most relevant → least relevant.
+                Rank ALL products by relevance to user preference.
 
                 Return ONLY JSON:
                 { "recommendations": [1,2,3] }
@@ -156,18 +148,16 @@ public class ChatGPTService {
             if (raw == null) return List.of();
 
             Map<?, ?> parsed = mapper.readValue(raw, Map.class);
-            Object arr = parsed.get("recommendations");
-
-            return extractLongList(arr);
+            return extractLongList(parsed.get("recommendations"));
 
         } catch (Exception e) {
-            log.error("❌ Rank error: {}", e.getMessage());
+            log.error("❌ ranking error: {}", e.getMessage());
             return List.of();
         }
     }
 
     /* ============================================================
-       🔹 3. SUGGEST RELATED PRODUCTS
+       🔹 3. RELATED PRODUCTS
        ============================================================ */
     public List<Long> suggestRelatedProducts(Product main, List<Product> candidates) {
 
@@ -191,7 +181,7 @@ public class ChatGPTService {
             String prompt = """
                 You are an AI cross-sell specialist.
 
-                Suggest products commonly bought together.
+                Suggest products often bought together.
 
                 Return ONLY:
                 { "suggestions": [11,12,55] }
@@ -204,9 +194,7 @@ public class ChatGPTService {
             if (raw == null) return List.of();
 
             Map<?, ?> parsed = mapper.readValue(raw, Map.class);
-            Object arr = parsed.get("suggestions");
-
-            return extractLongList(arr);
+            return extractLongList(parsed.get("suggestions"));
 
         } catch (Exception e) {
             log.error("❌ related-products error: {}", e.getMessage());
