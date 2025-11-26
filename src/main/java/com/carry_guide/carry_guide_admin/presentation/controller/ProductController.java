@@ -95,6 +95,11 @@ public class ProductController extends BaseController {
         ExpiryAnalyticsDTO analytics = productService.getExpiryAnalytics();
         return ok(analytics, "Fetched product expiry analytics successfully");
     }
+    @GetMapping("/api/product/all")
+    public ResponseEntity<?> getAllProducts() {
+        List<ProductDTO> products = productService.getAllProducts();
+        return ok(products, "Fetched all products successfully");
+    }
 }
 
 
