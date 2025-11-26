@@ -10,6 +10,5 @@ import java.util.List;
 public interface JpaUserHistoryRepository extends JpaRepository<UserHistory, Long> {
     List<UserHistory> findByCustomerId(Long customerId);
 
-
     boolean existsByCustomerIdAndProductKeyword(Long customerId, String productKeyword);
 }

@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,5 +20,6 @@ public class UserHistory {
 
     private Long customerId;
     private String productKeyword;
+
     private LocalDateTime dateTime;
 }

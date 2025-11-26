@@ -9,6 +9,5 @@ import java.time.LocalDateTime;
 public class UserHistoryDTO {
     private Long customerId;
     private String productKeyword;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime dateTime;
+    private String dateTime;
 }

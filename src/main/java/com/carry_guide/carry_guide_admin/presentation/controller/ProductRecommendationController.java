@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -21,36 +22,35 @@ public class ProductRecommendationController {
 
 
     @PostMapping("/history/save")
-    public ResponseEntity<?> saveHistory(@RequestBody UserHistoryDTO dto) {
+    public UserHistory saveHistory(@RequestBody UserHistoryDTO dto) {
 
-        boolean exists = userHistoryRepository.existsByCustomerIdAndProductKeyword(
-                dto.getCustomerId(),
-                dto.getProductKeyword()
-        );
-
-
-        if (exists) {
-            // Already recorded — SKIP saving
-            return ResponseEntity.ok("Keyword already stored. Skipped saving.");
+        // 🛑 Skip duplicate entries
+        if (userHistoryRepository.existsByCustomerIdAndProductKeyword(
+                dto.getCustomerId(), dto.getProductKeyword())) {
+            return null; // do not save duplicate
         }
 
-        // Save ONLY if not existing
+        // Convert incoming string date → LocalDateTime
+        LocalDateTime parsedDate = LocalDateTime.parse(dto.getDateTime());
+
         UserHistory history = UserHistory.builder()
                 .customerId(dto.getCustomerId())
                 .productKeyword(dto.getProductKeyword())
-                .dateTime(dto.getDateTime())
+                .dateTime(parsedDate)
                 .build();
 
-        return ResponseEntity.ok(userHistoryRepository.save(history));
+        return userHistoryRepository.save(history);
     }
 
+    // ✅ LOAD HISTORY FOR CUSTOMER
     @GetMapping("/history/{customerId}")
     public List<UserHistory> getHistory(@PathVariable Long customerId) {
         return userHistoryRepository.findByCustomerId(customerId);
     }
 
+    // ✅ GET AI RECOMMENDATIONS BASED ON HISTORY
     @GetMapping("/recommendations/{customerId}")
-    public List<ProductPriceDTO> getRecommendations(@PathVariable Long customerId) {
+    public List<?> getRecommendations(@PathVariable Long customerId) {
         return aiRecommendationService.getRecommendationsForUser(customerId);
     }
 }

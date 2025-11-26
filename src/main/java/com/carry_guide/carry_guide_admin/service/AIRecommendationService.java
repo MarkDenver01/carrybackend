@@ -1,11 +1,7 @@
 package com.carry_guide.carry_guide_admin.service;
 
-import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
-import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceMapper;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
-import com.carry_guide.carry_guide_admin.model.entity.ProductPrice;
 import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
-import com.carry_guide.carry_guide_admin.repository.JpaProductPriceRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserHistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,63 +16,34 @@ public class AIRecommendationService {
 
     private final JpaUserHistoryRepository userHistoryRepository;
     private final JpaProductRepository productRepository;
-    private final JpaProductPriceRepository priceRepository;
-    private final ProductPriceMapper mapper;
     private final ChatGPTService chatGPTService;
 
-    public List<ProductPriceDTO> getRecommendationsForUser(Long customerId) {
-
+    public List<Product> getRecommendationsForUser(Long customerId) {
         List<UserHistory> history = userHistoryRepository.findByCustomerId(customerId);
 
-        // NO HISTORY → DEFAULT PRODUCTS
         if (history.isEmpty()) {
-            return productRepository.findTop20ByOrderByProductIdDesc()
-                    .stream()
-                    .map(this::convertProductToDTO)
-                    .filter(Objects::nonNull)
-                    .toList();
+            return productRepository.findTop20ByOrderByProductIdDesc();
         }
 
-        // Extract keywords
+        // Extract unique keywords
         String keywords = history.stream()
                 .map(UserHistory::getProductKeyword)
                 .distinct()
                 .collect(Collectors.joining(", "));
 
-        // Call AI
+        // Ask ChatGPT for expanded recommendation keywords
         List<String> aiKeywords = chatGPTService.getRecommendedKeywords(keywords);
 
-        Set<Product> productMatches = new HashSet<>();
-
+        Set<Product> recommendations = new HashSet<>();
         for (String key : aiKeywords) {
-            productMatches.addAll(productRepository.findByProductNameContainingIgnoreCase(key));
-            productMatches.addAll(productRepository.findByCategory_CategoryNameContainingIgnoreCase(key));
+            recommendations.addAll(productRepository.findByProductNameContainingIgnoreCase(key));
+            recommendations.addAll(productRepository.findByCategory_CategoryNameContainingIgnoreCase(key));
         }
 
-        // IF AI has zero matches → fallback
-        if (productMatches.isEmpty()) {
-            return productRepository.findTop20ByOrderByProductIdDesc()
-                    .stream()
-                    .map(this::convertProductToDTO)
-                    .filter(Objects::nonNull)
-                    .toList();
+        if (recommendations.isEmpty()) {
+            return productRepository.findTop20ByOrderByProductIdDesc();
         }
 
-        // Convert MATCHES → DTO with price
-        return productMatches.stream()
-                .map(this::convertProductToDTO)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private ProductPriceDTO convertProductToDTO(Product product) {
-        ProductPrice latest = priceRepository.findByProduct_ProductId(product.getProductId())
-                .stream()
-                .findFirst()
-                .orElse(null);
-
-        if (latest == null) return null;
-
-        return mapper.toDto(latest);
+        return new ArrayList<>(recommendations);
     }
 }
