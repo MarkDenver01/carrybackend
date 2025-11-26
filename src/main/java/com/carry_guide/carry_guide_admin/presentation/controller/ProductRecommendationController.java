@@ -23,15 +23,14 @@ public class ProductRecommendationController {
 
 
     @PostMapping("/history/save")
-    public UserHistory saveHistory(@RequestBody UserHistoryDTO dto) {
+    public ResponseEntity<?> saveHistory(@RequestBody UserHistoryDTO dto) {
 
-        // 🛑 Skip duplicate entries
         if (userHistoryRepository.existsByCustomerIdAndProductKeyword(
                 dto.getCustomerId(), dto.getProductKeyword())) {
-            return null; // do not save duplicate
+            // 204 No Content – mobile just checks isSuccessful = true
+            return ResponseEntity.noContent().build();
         }
 
-        // Convert incoming string date → LocalDateTime
         LocalDateTime parsedDate = LocalDateTime.parse(dto.getDateTime());
 
         UserHistory history = UserHistory.builder()
@@ -40,22 +39,31 @@ public class ProductRecommendationController {
                 .dateTime(parsedDate)
                 .build();
 
-        return userHistoryRepository.save(history);
+        UserHistory saved = userHistoryRepository.save(history);
+        return ResponseEntity.ok(saved);
     }
 
     // ✅ LOAD HISTORY FOR CUSTOMER
     @GetMapping("/history/{customerId}")
     public List<UserHistory> getHistory(@PathVariable Long customerId) {
-        return userHistoryRepository.findByCustomerId(customerId);
+        return userHistoryRepository.findByCustomerIdOrderByDateTimeDesc(customerId);
     }
 
     // ✅ GET AI RECOMMENDATIONS BASED ON HISTORY
     @GetMapping("/recommendations/{customerId}")
-    public List<?> getRecommendations(@PathVariable Long customerId) {
+    public List<ProductPriceDTO> getRecommendations(@PathVariable Long customerId) {
         List<Product> products = aiRecommendationService.getRecommendationsForUser(customerId);
-
         return products.stream()
                 .map(ProductMapper::toDto)
                 .toList();
+    }
+
+    // 🔥 RELATED PRODUCTS / FREQUENTLY BOUGHT TOGETHER
+    @GetMapping("/recommendations/related/{productId}")
+    public ResponseEntity<List<ProductPriceDTO>> getRelatedProducts(
+            @PathVariable Long productId
+    ) {
+        List<ProductPriceDTO> related = aiRecommendationService.getRelatedProducts(productId);
+        return ResponseEntity.ok(related);
     }
 }

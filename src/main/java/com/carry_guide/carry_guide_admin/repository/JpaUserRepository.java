@@ -2,9 +2,11 @@ package com.carry_guide.carry_guide_admin.repository;
 
 import com.carry_guide.carry_guide_admin.model.entity.Role;
 import com.carry_guide.carry_guide_admin.model.entity.User;
+import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,4 +22,11 @@ public interface JpaUserRepository extends JpaRepository<User, Long> {
     boolean existsByMobileNumber(String mobileNumber);
 
     Boolean existsByEmailAndSignupMethod(String email, String signupMethod);
+
+    boolean existsByCustomerIdAndProductKeyword(Long customerId, String productKeyword);
+
+    List<UserHistory> findByCustomerId(Long customerId);
+
+    // For ranking (latest first)
+    List<UserHistory> findByCustomerIdOrderByDateTimeDesc(Long customerId);
 }
