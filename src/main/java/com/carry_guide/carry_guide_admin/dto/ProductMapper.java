@@ -26,7 +26,8 @@ public class ProductMapper {
 
         dto.setProductId(p.getProductId());
         dto.setProductName(p.getProductName());
-        dto.setProduceDescription(p.getProductDescription());
+        dto.setProduceDescription(p.getProductDescription() != null ?
+                p.getProductDescription() : "");
         dto.setProductCode(p.getProductCode());
         dto.setProductSize(p.getProductSize());
         dto.setProductImgUrl(p.getProductImgUrl());
@@ -46,7 +47,7 @@ public class ProductMapper {
                 p.getProductId(),
                 p.getProductCode(),
                 p.getProductName(),
-                p.getProductDescription(),
+                p.getProductDescription() != null ? p.getProductDescription() : "",
                 p.getStocks(),
                 p.getProductSize(),
                 p.getProductStatus(),
@@ -54,7 +55,7 @@ public class ProductMapper {
                 p.getExpiryDate(),
                 p.getProductInDate(),
                 p.getCategory() != null ? p.getCategory().getCategoryId() : null,
-                p.getCategory() != null ? p.getCategory().getCategoryName() : null
+                p.getCategory() != null ? p.getCategory().getCategoryName() : ""
         );
     }
 }

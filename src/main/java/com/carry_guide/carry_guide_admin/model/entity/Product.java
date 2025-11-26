@@ -36,7 +36,6 @@ public class Product {
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    @NotBlank
     @Size(max = 255)
     @Column(name = "product_description", nullable = false)
     private String productDescription;
