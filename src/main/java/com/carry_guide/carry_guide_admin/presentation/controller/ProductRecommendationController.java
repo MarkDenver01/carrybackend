@@ -3,14 +3,17 @@ package com.carry_guide.carry_guide_admin.presentation.controller;
 import com.carry_guide.carry_guide_admin.dto.ProductMapper;
 import com.carry_guide.carry_guide_admin.dto.request.UserHistoryDTO;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
+import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
 import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserHistoryRepository;
 import com.carry_guide.carry_guide_admin.service.AIRecommendationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,61 +24,67 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductRecommendationController {
 
-    private final JpaUserHistoryRepository historyRepo;
-    private final JpaProductRepository productRepo;
-    private final AIRecommendationService aiService;
+    private final JpaUserHistoryRepository userHistoryRepository;
+    private final JpaProductRepository productRepository;
+    private final AIRecommendationService aiRecommendationService;
 
-    // 🔹 SAVE USER SEARCH / CLICK HISTORY
+    // ============================================================
+    //  🔹 Save user history (search / click / purchase)
+    // ============================================================
     @PostMapping("/history/save")
-    public ResponseEntity<?> saveHistory(@RequestBody UserHistoryDTO dto) {
+    public UserHistory saveHistory(@RequestBody UserHistoryDTO dto) {
 
-        if (historyRepo.existsByCustomerIdAndProductKeyword(dto.getCustomerId(), dto.getProductKeyword())) {
-            return ResponseEntity.ok("Duplicate skipped");
+        // 🛑 Avoid duplicate entries for the same keyword + customer
+        if (userHistoryRepository.existsByCustomerIdAndProductKeyword(
+                dto.getCustomerId(), dto.getProductKeyword()
+        )) {
+            // Option 1: update datetime of existing history (optional)
+            // Option 2: just ignore duplicates
+            return null;
         }
-
-        LocalDateTime parsedDate = LocalDateTime.parse(dto.getDateTime());
 
         UserHistory h = UserHistory.builder()
                 .customerId(dto.getCustomerId())
                 .productKeyword(dto.getProductKeyword())
-                .dateTime(parsedDate)
+                .dateTime(LocalDateTime.now())
                 .build();
 
-        historyRepo.save(h);
-        return ResponseEntity.ok(h);
+        return userHistoryRepository.save(h);
     }
 
     // 🔹 RETURN USER HISTORY
     @GetMapping("/history/{customerId}")
     public List<UserHistory> getHistory(@PathVariable Long customerId) {
-        return historyRepo.findByCustomerIdOrderByDateTimeDesc(customerId);
+        return userHistoryRepository.findByCustomerIdOrderByDateTimeDesc(customerId);
     }
 
-    // 🔹 MAIN HOMEPAGE RECOMMENDATION — DTO VERSION
+    // ============================================================
+    //  🔹 1. RECOMMENDATION BY CUSTOMER
+    // ============================================================
     @GetMapping("/recommend/{customerId}")
-    public ResponseEntity<?> recommend(@PathVariable Long customerId) {
+    public List<ProductDTO> getRecommendations(@PathVariable Long customerId) {
 
-        List<Product> recommended = aiService.getRecommendationsForUser(customerId);
+        List<Product> products = aiRecommendationService.getRecommendationsForUser(customerId);
 
-        List<ProductPriceDTO> dtoList = recommended.stream()
-                .map(ProductMapper::toDto)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(dtoList);
+        return products.stream()
+                .map(ProductMapper::toProductDTO)
+                .toList();
     }
 
-    // 🔹 RELATED PRODUCTS — DTO VERSION
-    @GetMapping("/related/{productId}")
-    public ResponseEntity<?> related(@PathVariable Long productId) {
-        Product p = productRepo.findByProductId(productId);
-        if (p == null) return ResponseEntity.badRequest().body("Product not found");
+    // ============================================================
+    //  🔹 2. RELATED PRODUCTS FOR PRODUCT DETAIL
+    // ============================================================
+    @GetMapping("/product/{productId}/related")
+    public List<ProductDTO> getRelated(@PathVariable Long productId) {
 
-        List<Product> related = aiService.getRelatedProducts(p);
+        Product main = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Product not found: " + productId));
 
-        List<ProductPriceDTO> dtoList = related.stream()
-                .map(ProductMapper::toDto)
-                .collect(Collectors.toList());
+        List<Product> related = aiRecommendationService.getRelatedProducts(main);
 
-        return ResponseEntity.ok(dtoList);
+        return related.stream()
+                .map(ProductMapper::toProductDTO)
+                .toList();
     }
 }
