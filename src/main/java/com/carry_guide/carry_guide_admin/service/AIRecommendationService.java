@@ -20,52 +20,67 @@ public class AIRecommendationService {
 
     public List<Product> getRecommendationsForUser(Long customerId) {
 
-        // 1️⃣ Kunin lahat ng history, PINAKABAGO MUNA
-        List<UserHistory> history = userHistoryRepository
-                .findByCustomerIdOrderByDateTimeDesc(customerId);
+        // 1️⃣ Get history (latest first)
+        List<UserHistory> history =
+                userHistoryRepository.findByCustomerIdOrderByDateTimeDesc(customerId);
 
         if (history.isEmpty()) {
-            // Walang history → default top 20 products
+            // Walang history → default
             return productRepository.findTop20ByOrderByProductIdDesc();
         }
 
-        // 2️⃣ Gagamit tayo ng LinkedHashSet para:
-        //    - WALA duplications
-        //    - MAINTAIN ang INSERT ORDER (important sa "pinaka-latest una")
-        LinkedHashSet<Product> ordered = new LinkedHashSet<>();
+        // 2️⃣ Build candidate product list based **only** on history keywords
+        //    Para sure na kung ano nasa history, yun din core ng recommendation.
+        Map<Long, Product> candidateMap = new LinkedHashMap<>();
 
         for (UserHistory h : history) {
             String keyword = h.getProductKeyword();
 
-            // 🔹 2.1 Match by product name (pangunahing logic)
+            // Match by product name
             List<Product> byName =
                     productRepository.findByProductNameContainingIgnoreCase(keyword);
-            ordered.addAll(byName);
+            byName.forEach(p -> candidateMap.putIfAbsent(p.getProductId(), p));
 
-            // 🔹 2.2 Optional: match by category (kung gusto mo pa rin ito)
+            // Optional: match by category name
             List<Product> byCategory =
                     productRepository.findByCategory_CategoryNameContainingIgnoreCase(keyword);
-            ordered.addAll(byCategory);
+            byCategory.forEach(p -> candidateMap.putIfAbsent(p.getProductId(), p));
         }
 
-        // 3️⃣ OPTIONAL: kung gusto mo pa rin ng AI expansion (add-on lang, hindi nauuna)
-        //    Comment out block na 'to kung ayaw mo na si ChatGPT magdagdag.
-        String allKeywords = history.stream()
-                .map(UserHistory::getProductKeyword)
-                .distinct()
-                .collect(Collectors.joining(", "));
+        List<Product> candidates = new ArrayList<>(candidateMap.values());
 
-        List<String> aiKeywords = chatGPTService.getRecommendedKeywords(allKeywords);
-        for (String key : aiKeywords) {
-            ordered.addAll(productRepository.findByProductNameContainingIgnoreCase(key));
-            ordered.addAll(productRepository.findByCategory_CategoryNameContainingIgnoreCase(key));
-        }
-
-        // 4️⃣ Kung sakaling wala pa rin nahanap (edge case)
-        if (ordered.isEmpty()) {
+        if (candidates.isEmpty()) {
+            // Wala pa ring match → default
             return productRepository.findTop20ByOrderByProductIdDesc();
         }
 
-        return new ArrayList<>(ordered); // ⬅️ ORDERED na based sa history dateTime
+        // 3️⃣ Let ChatGPT rank candidates
+        List<Long> rankedIds = chatGPTService.rankProductsByHistory(history, candidates);
+
+        if (rankedIds == null || rankedIds.isEmpty()) {
+            // AI failed / no ranking → fallback to original candidate order
+            return candidates;
+        }
+
+        // 4️⃣ Build ordered list based on AI ranking
+        Map<Long, Product> byId = new HashMap<>();
+        for (Product p : candidates) {
+            byId.put(p.getProductId(), p);
+        }
+
+        List<Product> ordered = new ArrayList<>();
+
+        // 4.1 Add products in the exact AI-ranked order
+        for (Long id : rankedIds) {
+            Product p = byId.remove(id);
+            if (p != null) {
+                ordered.add(p);
+            }
+        }
+
+        // 4.2 Kung may natira pang candidates na wala sa list ni GPT → append sa dulo
+        ordered.addAll(byId.values());
+
+        return ordered;
     }
 }

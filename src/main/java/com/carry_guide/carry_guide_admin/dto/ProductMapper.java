@@ -7,22 +7,18 @@ public class ProductMapper {
     public static ProductPriceDTO toDto(Product p) {
         ProductPriceDTO dto = new ProductPriceDTO();
 
-        dto.setPriceId(
-                p.getProductPrices().isEmpty() ? null :
-                        p.getProductPrices().get(0).getPriceId()
-        );
+        // Simplest: kunin mo lang first price
+        var firstPrice = p.getProductPrices().isEmpty()
+                ? null
+                : p.getProductPrices().get(0);
+
+        if (firstPrice != null) {
+            dto.setPriceId(firstPrice.getPriceId());
+            dto.setBasePrice(firstPrice.getBasePrice());
+            dto.setEffectiveDate(firstPrice.getEffectiveDate());
+        }
 
         dto.setProductId(p.getProductId());
-        dto.setBasePrice(
-                p.getProductPrices().isEmpty() ? null :
-                        p.getProductPrices().get(0).getBasePrice()
-        );
-
-        dto.setEffectiveDate(
-                p.getProductPrices().isEmpty() ? null :
-                        p.getProductPrices().get(0).getEffectiveDate()
-        );
-
         dto.setProductName(p.getProductName());
         dto.setProduceDescription(p.getProductDescription());
         dto.setProductCode(p.getProductCode());
