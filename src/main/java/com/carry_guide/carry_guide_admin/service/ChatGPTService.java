@@ -2,6 +2,7 @@ package com.carry_guide.carry_guide_admin.service;
 
 import com.carry_guide.carry_guide_admin.model.entity.Product;
 import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,49 +39,42 @@ public class ChatGPTService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(openAiKey);
 
-            Map<String, Object> input = Map.of(
-                    "role", "user",
-                    "content", prompt
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", MODEL);
+            requestBody.put("input", prompt);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    OPENAI_URL,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
             );
 
-            Map<String, Object> body = Map.of(
-                    "model", MODEL,
-                    "input", List.of(input),
-                    "temperature", 0.4
-            );
+            JsonNode root = mapper.readTree(response.getBody());
 
-            ResponseEntity<Map> response =
-                    restTemplate.exchange(
-                            OPENAI_URL,
-                            HttpMethod.POST,
-                            new HttpEntity<>(body, headers),
-                            Map.class
-                    );
+            // IMPORTANT: Responses API uses "output" array
+            JsonNode output = root.get("output");
 
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("❌ OpenAI error: {}", response.getStatusCode());
-                return null;
+            if (output == null || !output.isArray() || output.size() == 0) {
+                log.error("❌ Missing output array in OpenAI response");
+                return "";
             }
 
-            Map<String, Object> result = response.getBody();
-            if (result == null) {
-                log.error("❌ OpenAI returned empty response");
-                return null;
-            }
+            JsonNode first = output.get(0);
 
-            List<Map<String, Object>> outputList =
-                    (List<Map<String, Object>>) result.get("output_text");
-
-            if (outputList == null || outputList.isEmpty()) {
+            // MUST BE: type=output_text, text=<generated text>
+            if (!first.has("text")) {
                 log.error("❌ Missing output_text");
-                return null;
+                return "";
             }
 
-            return (String) outputList.get(0).get("content");
+            return first.get("text").asText();
 
         } catch (Exception e) {
-            log.error("❌ OpenAI crash: {}", e.getMessage());
-            return null;
+            log.error("❌ OpenAI Error: {}", e.getMessage());
+            return "";
         }
     }
 
