@@ -19,3 +19,4 @@ public class ProductPriceDTO {
     private int stocks;
     private String categoryName;
 }
+

@@ -68,7 +68,6 @@ public class Product {
     // 🟢 Category Relationship
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    @JsonIgnore
     private ProductCategory category;
 
     // 🟢 Prices Relationship (One product → many prices)

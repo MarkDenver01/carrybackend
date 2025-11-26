@@ -33,6 +33,5 @@ public class ProductCategory {
     private String categoryDescription;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    @JsonIgnore
     private List<Product> products = new ArrayList<>();
 }

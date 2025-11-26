@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
+import com.carry_guide.carry_guide_admin.dto.ProductMapper;
 import com.carry_guide.carry_guide_admin.dto.request.UserHistoryDTO;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
@@ -51,6 +52,10 @@ public class ProductRecommendationController {
     // ✅ GET AI RECOMMENDATIONS BASED ON HISTORY
     @GetMapping("/recommendations/{customerId}")
     public List<?> getRecommendations(@PathVariable Long customerId) {
-        return aiRecommendationService.getRecommendationsForUser(customerId);
+        List<Product> products = aiRecommendationService.getRecommendationsForUser(customerId);
+
+        return products.stream()
+                .map(ProductMapper::toDto)
+                .toList();
     }
 }
