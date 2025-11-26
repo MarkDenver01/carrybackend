@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.dto.response.product;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,6 +16,6 @@ public record ProductDTO(
         LocalDateTime expiryDate,
         LocalDateTime productInDate,
         Long categoryId,
-        String productCategory
+        String categoryName
 ) {
 }
