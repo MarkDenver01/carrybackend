@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -17,76 +16,107 @@ import java.util.*;
 public class ChatGPTService {
 
     @Value("${openai.api.key}")
-    private String openAiApiKey;
+    private String openAiKey;
 
-    private static final String OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String OPENAI_URL = "https://api.openai.com/v1/responses";
+    private static final String MODEL = "gpt-4.1-mini";
 
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public ChatGPTService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-    // 🔹 HIGH-LEVEL keyword expansion (history → related categories)
-    public List<String> getRecommendedKeywords(String userHistoryKeywords) {
+    /* ============================================================
+       🔹 UNIVERSAL CALLER (NEW API FORMAT)
+       ============================================================ */
+    private String callOpenAi(String prompt) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openAiApiKey);
-
-        String prompt = String.format("""
-            You are an intelligent recommendation AI.
-            The user has recently interacted with these products: [%s].
-            Detect if any are Tagalog or in another language, translate them to English,
-            and suggest up to 10 related product types or categories. 
-            Return only a comma-separated list of product keywords.
-        """, userHistoryKeywords);
+        headers.setBearerAuth(openAiKey);
 
         Map<String, Object> body = Map.of(
-                "model", "gpt-3.5-turbo",
-                "messages", List.of(Map.of("role", "user", "content", prompt)),
-                "temperature", 0.7
+                "model", MODEL,
+                "input", List.of(
+                        Map.of(
+                                "role", "user",
+                                "content", prompt
+                        )
+                ),
+                "temperature", 0.4
         );
 
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
         try {
-            ResponseEntity<Map> response =
-                    restTemplate.postForEntity(OPENAI_URL, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    OPENAI_URL,
+                    HttpMethod.POST,
+                    new HttpEntity<>(body, headers),
+                    Map.class
+            );
 
-            if (response.getStatusCode() != HttpStatus.OK) {
-                log.error("ChatGPT API returned status: {}", response.getStatusCode());
-                return List.of();
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.error("❌ OpenAI error status: {}", response.getStatusCode());
+                return null;
             }
 
             Map<String, Object> result = response.getBody();
-            if (result == null || !result.containsKey("choices")) {
-                log.warn("Empty or invalid ChatGPT API response");
-                return List.of();
+            if (result == null) {
+                log.error("❌ OpenAI returned empty body");
+                return null;
             }
 
-            String content = (String) ((Map)
-                    ((Map) ((List) result.get("choices")).get(0))
-                            .get("message"))
-                    .get("content");
+            List<String> texts = (List<String>) result.get("output_text");
 
-            return Arrays.stream(content.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .distinct()
-                    .limit(10)
-                    .toList();
+            if (texts == null || texts.isEmpty()) {
+                log.error("❌ OpenAI response missing output_text: {}", result);
+                return null;
+            }
 
-        } catch (HttpClientErrorException e) {
-            log.error("OpenAI Error Response: {}", e.getResponseBodyAsString());
-            return List.of();
+            String raw = texts.get(0).trim();
+
+            raw = raw.replace("```json", "")
+                    .replace("```", "")
+                    .trim();
+
+            return raw;
+
         } catch (Exception e) {
-            log.error("Unexpected error communicating with OpenAI: {}", e.getMessage());
-            return List.of();
+            log.error("❌ OpenAI CRASH: {}", e.getMessage());
+            return null;
         }
     }
 
-    // 🔹 RANK products based on user history (personalized list)
+    /* ============================================================
+       🔹 1. EXPAND KEYWORDS
+       ============================================================ */
+    public List<String> getRecommendedKeywords(String history) {
+
+        String prompt = """
+            You are an AI category generator for a grocery store.
+
+            User interacted with: [%s].
+
+            Translate Tagalog terms → English.
+            Generate up to 10 related product categories.
+
+            Return ONLY comma-separated list.
+        """.formatted(history);
+
+        String out = callOpenAi(prompt);
+        if (out == null) return List.of();
+
+        return Arrays.stream(out.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .limit(10)
+                .toList();
+    }
+
+    /* ============================================================
+       🔹 2. RANK PRODUCTS BASED ON HISTORY
+       ============================================================ */
     public List<Long> rankProductsByHistory(
             List<UserHistory> history,
             List<Product> candidates
@@ -105,58 +135,40 @@ public class ChatGPTService {
                     "description", p.getProductDescription()
             )).toList());
 
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-
             String prompt = """
-                    You are an AI product recommendation ranking engine.
+                You are an AI product ranking engine.
 
-                    You will receive a JSON object containing:
-                    - "history": list of user interactions, each with "productKeyword" and "dateTime"
-                    - "products": list of products, each with "productId", "productName", "category", "description"
+                Receive:
+                - history
+                - products
 
-                    Task:
-                    1. Understand what the user is interested in based on the history.
-                    2. Rank the products from MOST relevant to LEAST relevant for this user.
-                    3. Favor:
-                       - Products whose names or descriptions closely match recent history keywords.
-                       - More recent history should have more weight.
-                    4. Always include all given products in the ranking.
+                Determine user preference.
+                Rank ALL products most relevant → least relevant.
 
-                    Return ONLY a JSON object in this exact format:
-                    {
-                      "recommendations": [1, 5, 3, 2]
-                    }
+                Return ONLY JSON:
+                { "recommendations": [1,2,3] }
 
-                    JSON to analyze:
-                    """ + jsonPayload;
+                Data:
+                %s
+            """.formatted(mapper.writeValueAsString(payload));
 
-            String rawResponse = callOpenAiApi(prompt);
+            String raw = callOpenAi(prompt);
+            if (raw == null) return List.of();
 
-            Map<?, ?> parsed = objectMapper.readValue(rawResponse, Map.class);
-            Object recObj = parsed.get("recommendations");
-            if (recObj instanceof List<?> list) {
-                List<Long> result = new ArrayList<>();
-                for (Object o : list) {
-                    if (o instanceof Number n) {
-                        result.add(n.longValue());
-                    } else if (o instanceof String s) {
-                        try {
-                            result.add(Long.parseLong(s));
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
-                }
-                return result;
-            }
+            Map<?, ?> parsed = mapper.readValue(raw, Map.class);
+            Object arr = parsed.get("recommendations");
+
+            return extractLongList(arr);
 
         } catch (Exception e) {
-            log.error("Error parsing rankProductsByHistory response", e);
+            log.error("❌ Rank error: {}", e.getMessage());
+            return List.of();
         }
-
-        return Collections.emptyList();
     }
 
-    // 🔹 CROSS-SELL / RELATED PRODUCTS
+    /* ============================================================
+       🔹 3. SUGGEST RELATED PRODUCTS
+       ============================================================ */
     public List<Long> suggestRelatedProducts(Product main, List<Product> candidates) {
 
         try {
@@ -176,121 +188,45 @@ public class ChatGPTService {
                     "description", p.getProductDescription()
             )).toList());
 
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-
             String prompt = """
-                You are an AI recommendation engine for grocery and retail items.
+                You are an AI cross-sell specialist.
 
-                You will receive:
-                - mainProduct: The product the user is currently viewing or buying
-                - candidates: List of other products in the store
+                Suggest products commonly bought together.
 
-                Task:
-                1. Suggest items that are commonly bought together with the main product.
-                2. Think like a Filipino shopper.
-                3. Return the ranking (most relevant first).
+                Return ONLY:
+                { "suggestions": [11,12,55] }
 
-                Example:
-                If mainProduct = Bread → suggest Cheese Whiz, Coffee, Juice, Peanut Butter.
+                Data:
+                %s
+            """.formatted(mapper.writeValueAsString(payload));
 
-                IMPORTANT:
-                Return ONLY a JSON object like this:
-                {
-                   "suggestions": [12, 34, 55]
-                }
+            String raw = callOpenAi(prompt);
+            if (raw == null) return List.of();
 
-                Analyze this JSON:
-                """ + jsonPayload;
+            Map<?, ?> parsed = mapper.readValue(raw, Map.class);
+            Object arr = parsed.get("suggestions");
 
-            String raw = callOpenAiApi(prompt);
-
-            Map<?, ?> parsed = objectMapper.readValue(raw, Map.class);
-            Object obj = parsed.get("suggestions");
-
-            if (obj instanceof List<?> list) {
-                List<Long> result = new ArrayList<>();
-                for (Object o : list) {
-                    if (o instanceof Number n) {
-                        result.add(n.longValue());
-                    } else if (o instanceof String s) {
-                        try {
-                            result.add(Long.parseLong(s));
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
-                return result;
-            }
+            return extractLongList(arr);
 
         } catch (Exception e) {
-            log.error("AI related-products failed: {}", e.getMessage());
+            log.error("❌ related-products error: {}", e.getMessage());
+            return List.of();
         }
-
-        return Collections.emptyList();
     }
 
-    // 🔧 Low-level OpenAI caller (shared)
-    private String callOpenAiApi(String prompt) {
+    /* ============================================================
+       🔧 Extract array → List<Long>
+       ============================================================ */
+    private List<Long> extractLongList(Object obj) {
+        if (!(obj instanceof List<?> list)) return List.of();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openAiApiKey);
-
-        Map<String, Object> body = Map.of(
-                "model", "gpt-3.5-turbo",
-                "messages", List.of(
-                        Map.of("role", "user", "content", prompt)
-                ),
-                "temperature", 0.4
-        );
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
-        try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    OPENAI_URL,
-                    request,
-                    Map.class
-            );
-
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("ChatGPT ranking API failed: {}", response.getStatusCode());
-                return "{\"recommendations\":[]}";
-            }
-
-            Map<String, Object> result = response.getBody();
-
-            if (result == null || !result.containsKey("choices")) {
-                log.error("Invalid ChatGPT ranking response");
-                return "{\"recommendations\":[]}";
-            }
-
-            String content = (String) ((Map)
-                    ((Map) ((List) result.get("choices")).get(0))
-                            .get("message"))
-                    .get("content");
-
-            // Clean up markdown formatting if present
-            content = content.trim()
-                    .replace("```json", "")
-                    .replace("```", "")
-                    .trim();
-
-            if (!content.startsWith("{")) {
-                int start = content.indexOf("{");
-                int end = content.lastIndexOf("}");
-                if (start != -1 && end != -1) {
-                    content = content.substring(start, end + 1);
-                }
-            }
-
-            log.info("GPT RANK RESPONSE = {}", content);
-
-            return content;
-
-        } catch (Exception e) {
-            log.error("Error calling ChatGPT ranking: {}", e.getMessage());
-            return "{\"recommendations\":[]}";
+        List<Long> out = new ArrayList<>();
+        for (Object o : list) {
+            try {
+                if (o instanceof Number n) out.add(n.longValue());
+                if (o instanceof String s) out.add(Long.parseLong(s));
+            } catch (Exception ignored) {}
         }
+        return out;
     }
 }
