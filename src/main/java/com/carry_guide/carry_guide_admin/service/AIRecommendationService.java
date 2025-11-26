@@ -25,11 +25,11 @@ public class AIRecommendationService {
     public List<Product> getRecommendationsForUser(Long customerId) {
 
         List<UserHistory> history = historyRepo.findByCustomerIdOrderByDateTimeDesc(customerId);
-        List<Product> all = productRepo.findAllActiveProducts(); // only Available
+        List<Product> all = productRepo.findAllActiveProducts();  // Only Available products
 
-        if (all.isEmpty()) return List.of();
-
-        // 🔹 Walang history → newest products lang
+        // =============================
+        // 🔹 CASE 1: No history → newest
+        // =============================
         if (history.isEmpty()) {
             return all.stream()
                     .sorted(Comparator.comparing(Product::getProductInDate).reversed())
@@ -37,45 +37,79 @@ public class AIRecommendationService {
                     .toList();
         }
 
-        // 🔹 Build history keywords string for GPT
+        // =============================
+        // 🔥 STEP 1 — HISTORY FIRST LOGIC
+        // =============================
+
+        List<Product> historyBased = new ArrayList<>();
+
+        for (UserHistory h : history) {
+            String keyword = h.getProductKeyword();
+
+            // Find matches for this exact historical keyword
+            List<Product> matches = productRepo.searchByKeyword(keyword);
+
+            for (Product p : matches) {
+                if (!historyBased.contains(p)) { // Avoid duplicates
+                    historyBased.add(p);
+                }
+            }
+
+            if (historyBased.size() >= 12) break;
+        }
+
+        // If enough products already, return
+        if (historyBased.size() >= 12) {
+            return historyBased.subList(0, 12);
+        }
+
+        // ============================================
+        // 🔥 STEP 2 — GPT-BASED FILLER RECOMMENDATIONS
+        // ============================================
+
+        // Build string of all user history keywords
         String historyKeywords = String.join(", ",
                 history.stream().map(UserHistory::getProductKeyword).toList()
         );
 
-        // 🔹 Step 1: Expand keywords via GPT
-        List<String> expandedKeywords = gpt.getRecommendedKeywords(historyKeywords);
-        log.info("Expanded keywords from GPT: {}", expandedKeywords);
+        // GPT expands keywords
+        List<String> expanded = gpt.getRecommendedKeywords(historyKeywords);
 
-        // 🔹 Step 2: Local filter ng candidates using keywords
-        List<Product> candidates = all.stream()
-                .filter(p -> matches(p, expandedKeywords))
+        // Find candidates from GPT expanded keywords
+        List<Product> gptCandidates = all.stream()
+                .filter(p -> matches(p, expanded))
                 .toList();
 
-        if (candidates.isEmpty()) {
-            log.info("No candidate match by keywords. Falling back to ALL active.");
-            candidates = all;
+        if (gptCandidates.isEmpty()) {
+            gptCandidates = all; // fallback
         }
 
-        // 🔹 Step 3: Rank via GPT → returns recommended product IDs
-        List<Long> rankedIds = gpt.rankProductsByHistory(history, candidates);
-        log.info("GPT ranked product IDs: {}", rankedIds);
+        // GPT ranking by history
+        List<Long> rankedIds = gpt.rankProductsByHistory(history, gptCandidates);
 
-        // 🔥 IMPORTANT: dito natin ginagamit yung "recommendations" galing kay GPT
-        if (!rankedIds.isEmpty()) {
+        // Fetch products by GPT IDs
+        List<Product> ranked = productRepo.findByProductIds(rankedIds);
+        List<Product> rankedSorted = sortByRanking(ranked, rankedIds);
 
-            // Kunin lang products na kasama sa GPT IDs
-            List<Product> recommended = productRepo.findByProductIds(rankedIds);
+        // Remove items already recommended
+        rankedSorted = rankedSorted.stream()
+                .filter(p -> !historyBased.contains(p))
+                .toList();
 
-            // Sort by GPT order
-            List<Product> sorted = sortByRanking(recommended, rankedIds);
+        // =============================
+        // 🔥 FINAL COMBINATION
+        // =============================
 
-            // Limit to 12 for UI
-            return sorted.stream().limit(12).toList();
+        List<Product> finalList = new ArrayList<>(historyBased);
+
+        for (Product p : rankedSorted) {
+            if (finalList.size() >= 12) break;
+            finalList.add(p);
         }
 
-        // 🔹 Fallback: kahit walang GPT ranking, gamitin pa rin local candidates
-        return candidates.stream().limit(12).toList();
+        return finalList;
     }
+
 
     /**
      * Related products for Product Detail screen
