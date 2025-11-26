@@ -1,6 +1,7 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
 import com.carry_guide.carry_guide_admin.dto.request.UserHistoryDTO;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
 import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
 import com.carry_guide.carry_guide_admin.repository.JpaUserHistoryRepository;
@@ -49,7 +50,7 @@ public class ProductRecommendationController {
     }
 
     @GetMapping("/recommendations/{customerId}")
-    public List<Product> getRecommendations(@PathVariable Long customerId) {
+    public List<ProductPriceDTO> getRecommendations(@PathVariable Long customerId) {
         return aiRecommendationService.getRecommendationsForUser(customerId);
     }
 }
