@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.carry_guide.carry_guide_admin.dto.response.analytics.ExpiryAnalyticsDTO;
+
 
 import java.util.List;
 
@@ -72,6 +74,7 @@ public class ProductController extends BaseController {
     }
 
 
+
     @PatchMapping("/api/product/{productId}/update_status")
     public ResponseEntity<?> updateProductStatus(
             @PathVariable Long productId,
@@ -85,6 +88,20 @@ public class ProductController extends BaseController {
     public ResponseEntity<?> deleteProduct(@PathVariable Long productId) {
         productService.deleteProduct(productId);
         return deleted("Product deleted successfully");
-    }
 
+    }
+    @GetMapping("/api/product/expiry-analytics")
+    public ResponseEntity<?> getExpiryAnalytics() {
+        ExpiryAnalyticsDTO analytics = productService.getExpiryAnalytics();
+        return ok(analytics, "Fetched product expiry analytics successfully");
+    }
 }
+
+
+
+
+
+
+
+
+
