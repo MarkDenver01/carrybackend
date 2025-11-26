@@ -100,6 +100,10 @@ public class ProductController extends BaseController {
         List<ProductDTO> products = productService.getAllProducts();
         return ok(products, "Fetched all products successfully");
     }
+    @GetMapping("/api/product/inventory-alerts")
+    public ResponseEntity<?> getInventoryAlerts() {
+        return ok(productService.getInventoryAlerts(), "Fetched inventory alerts successfully");
+    }
 }
 
 

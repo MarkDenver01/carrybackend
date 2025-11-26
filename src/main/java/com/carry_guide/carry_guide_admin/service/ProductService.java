@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.service;
 
+import com.carry_guide.carry_guide_admin.dto.response.analytics.InventoryAlertDTO;
 import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductRequest;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductStatusUpdateRequest;
@@ -13,6 +14,7 @@ import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import com.carry_guide.carry_guide_admin.dto.response.analytics.ExpiryAnalyticsDTO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
@@ -40,6 +42,7 @@ public class ProductService {
 
     private final JpaProductRepository productRepository;
     private final JpaProductCategoryRepository productCategoryRepository;
+
 
     /** Get all products (clean, no recommendation list) */
     public List<ProductDTO> getAllProducts() {
@@ -197,4 +200,27 @@ public class ProductService {
                 expiringOrExpired
         );
     }
+    public InventoryAlertDTO getInventoryAlerts() {
+
+        int LOW_STOCK_THRESHOLD = 10;
+        int EXPIRING_SOON_DAYS = 7;
+
+        long lowStock = productRepository.countLowStock(LOW_STOCK_THRESHOLD);
+        long outOfStock = productRepository.countOutOfStock();
+
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Manila"));
+        LocalDateTime limit = now.plusDays(EXPIRING_SOON_DAYS);
+
+        long expiringSoon = productRepository.countExpiringSoon(now, limit);
+
+        return new InventoryAlertDTO(
+                lowStock,
+                outOfStock,
+                expiringSoon
+        );
+    }
 }
+
+
+
+
