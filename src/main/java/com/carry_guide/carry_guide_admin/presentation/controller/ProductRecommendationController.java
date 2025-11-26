@@ -3,8 +3,10 @@ package com.carry_guide.carry_guide_admin.presentation.controller;
 import com.carry_guide.carry_guide_admin.dto.ProductMapper;
 import com.carry_guide.carry_guide_admin.dto.request.UserHistoryDTO;
 import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
+import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceMapper;
 import com.carry_guide.carry_guide_admin.dto.response.product.ProductDTO;
 import com.carry_guide.carry_guide_admin.model.entity.Product;
+import com.carry_guide.carry_guide_admin.model.entity.ProductPrice;
 import com.carry_guide.carry_guide_admin.model.entity.UserHistory;
 import com.carry_guide.carry_guide_admin.repository.JpaProductRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaUserHistoryRepository;
@@ -16,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,6 +31,7 @@ public class ProductRecommendationController {
     private final JpaUserHistoryRepository userHistoryRepository;
     private final JpaProductRepository productRepository;
     private final AIRecommendationService aiRecommendationService;
+    private final ProductPriceMapper productPriceMapper;
 
     // ============================================================
     //  🔹 Save user history (search / click / purchase)
@@ -62,12 +67,17 @@ public class ProductRecommendationController {
     //  🔹 1. RECOMMENDATION BY CUSTOMER
     // ============================================================
     @GetMapping("/recommend/{customerId}")
-    public List<ProductDTO> getRecommendations(@PathVariable Long customerId) {
+    public List<ProductPriceDTO> getRecommendations(@PathVariable Long customerId) {
 
         List<Product> products = aiRecommendationService.getRecommendationsForUser(customerId);
 
         return products.stream()
-                .map(ProductMapper::toProductDTO)
+                .map(p -> {
+                    ProductPrice price = getLatestPrice(p);
+                    if (price == null) return null;
+                    return productPriceMapper.toDto(price);
+                })
+                .filter(Objects::nonNull)
                 .toList();
     }
 
@@ -75,7 +85,7 @@ public class ProductRecommendationController {
     //  🔹 2. RELATED PRODUCTS FOR PRODUCT DETAIL
     // ============================================================
     @GetMapping("/product/{productId}/related")
-    public List<ProductDTO> getRelated(@PathVariable Long productId) {
+    public List<ProductPriceDTO> getRelated(@PathVariable Long productId) {
 
         Product main = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -84,7 +94,19 @@ public class ProductRecommendationController {
         List<Product> related = aiRecommendationService.getRelatedProducts(main);
 
         return related.stream()
-                .map(ProductMapper::toProductDTO)
+                .map(p -> {
+                    ProductPrice price = getLatestPrice(p);
+                    if (price == null) return null;
+                    return productPriceMapper.toDto(price);
+                })
+                .filter(Objects::nonNull)
                 .toList();
+    }
+
+    private ProductPrice getLatestPrice(Product product) {
+        return product.getProductPrices().stream()
+                .sorted(Comparator.comparing(ProductPrice::getEffectiveDate).reversed())
+                .findFirst()
+                .orElse(null);
     }
 }
