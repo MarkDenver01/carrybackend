@@ -212,34 +212,51 @@ public class ChatGPTService {
             }
 
             String prompt = """
-                        You are an AI ranking engine for a grocery store.
-                    
-                        RANK ALL candidate products by analyzing ONLY their product names.
-                        Compare:
-                        - similarity with the user's past product keywords
-                        - typical co-purchased items
-                        - natural product relationships
-                    
-                        DO NOT infer product description (there is none).
-                        DO NOT add explanation.
-                        DO NOT add extra fields.
-                    
-                        Return ONLY valid JSON:
-                        { "recommendations": [1,2,3] }
-                    
-                        Data:
-                        %s
-                    """.formatted(jsonPayload);
+            You are an AI ranking engine for a grocery store.
+
+            RANK ALL candidate products by analyzing ONLY their product names.
+            Compare:
+            - similarity with the user's past product keywords
+            - typical co-purchased items
+            - natural product relationships
+
+            DO NOT infer product description.
+            DO NOT add explanation.
+            DO NOT add extra fields.
+
+            Return ONLY valid JSON:
+            { "recommendations": [1,2,3] }
+
+            Data:
+            %s
+        """.formatted(jsonPayload);
 
             String raw = callOpenAi(prompt, 0.4);
             if (raw == null || raw.isBlank()) return List.of();
 
             String jsonOnly = extractJsonObject(raw);
 
-            Map<?, ?> parsed = mapper.readValue(jsonOnly, Map.class);
-            List<Long> ids = extractLongList(parsed.get("recommendations"));
+            if (jsonOnly == null || jsonOnly.isBlank()) {
+                log.error("GPT returned empty or invalid JSON. raw={}", raw);
+                return List.of();
+            }
 
+            Map<?, ?> parsed;
+            try {
+                parsed = mapper.readValue(jsonOnly, Map.class);
+            } catch (Exception ex) {
+                log.error("❌ JSON parse failed: {} | raw={}", ex.getMessage(), raw);
+                return List.of();
+            }
+
+            Object arr = parsed.get("recommendations");
+            if (arr == null) return List.of();
+
+            List<Long> ids = extractLongList(arr);
+
+            // SAVE TO CACHE
             rankingCache.put(cacheKey, ids);
+
             return ids;
 
         } catch (Exception e) {
@@ -247,6 +264,7 @@ public class ChatGPTService {
             return List.of();
         }
     }
+
 
     /* ============================================================
        🔹 3. RELATED PRODUCTS (CROSS-SELL)
@@ -276,33 +294,49 @@ public class ChatGPTService {
             }
 
             String prompt = """
-                        You are an AI cross-sell recommendation engine.
-                    
-                        Given:
-                        - One main product name
-                        - A list of other product names
-                    
-                        TASK:
-                        - Suggest products that consumers typically buy together
-                          with the main product.
-                        - Use ONLY productName similarities and typical grocery behavior.
-                    
-                        Return ONLY JSON:
-                        { "suggestions": [11, 12, 55] }
-                    
-                        Data:
-                        %s
-                    """.formatted(jsonPayload);
+            You are an AI cross-sell recommendation engine.
+
+            Given:
+            - One main product name
+            - A list of other product names
+
+            TASK:
+            - Suggest products typically bought together with the main item.
+            - Use ONLY productName similarities and grocery behavior.
+
+            Return ONLY JSON:
+            { "suggestions": [11, 12, 55] }
+
+            Data:
+            %s
+        """.formatted(jsonPayload);
 
             String raw = callOpenAi(prompt, 0.4);
             if (raw == null || raw.isBlank()) return List.of();
 
             String jsonOnly = extractJsonObject(raw);
 
-            Map<?, ?> parsed = mapper.readValue(jsonOnly, Map.class);
-            List<Long> ids = extractLongList(parsed.get("suggestions"));
+            if (jsonOnly == null || jsonOnly.isBlank()) {
+                log.error("GPT returned empty JSON. raw={}", raw);
+                return List.of();
+            }
 
+            Map<?, ?> parsed;
+            try {
+                parsed = mapper.readValue(jsonOnly, Map.class);
+            } catch (Exception ex) {
+                log.error("❌ JSON parse failed: {} | raw={}", ex.getMessage(), raw);
+                return List.of();
+            }
+
+            Object arr = parsed.get("suggestions");
+            if (arr == null) return List.of();
+
+            List<Long> ids = extractLongList(arr);
+
+            // SAVE TO CACHE
             relatedCache.put(cacheKey, ids);
+
             return ids;
 
         } catch (Exception e) {
@@ -310,6 +344,7 @@ public class ChatGPTService {
             return List.of();
         }
     }
+
 
     /* ============================================================
        🔧 Helper: Extract JSON object from raw text
