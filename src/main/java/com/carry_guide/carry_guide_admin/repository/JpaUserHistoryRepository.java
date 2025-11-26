@@ -14,4 +14,5 @@ public interface JpaUserHistoryRepository extends JpaRepository<UserHistory, Lon
 
     List<UserHistory> findByCustomerIdOrderByDateTimeDesc(Long customerId);
 
+
 }
