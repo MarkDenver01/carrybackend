@@ -9,6 +9,9 @@ public class ProductPriceMapper {
         ProductPriceDTO dto = new ProductPriceDTO();
         dto.setPriceId(entity.getPriceId());
         dto.setProductId(entity.getProduct().getProductId());
+        dto.setBasePrice(entity.getBasePrice());
+        dto.setEffectiveDate(entity.getEffectiveDate());
+
         dto.setProductName(entity.getProduct().getProductName());
         dto.setProduceDescription(entity.getProduct().getProductDescription());
         dto.setProductCode(entity.getProduct().getProductCode());
@@ -16,8 +19,7 @@ public class ProductPriceMapper {
         dto.setProductImgUrl(entity.getProduct().getProductImgUrl());
         dto.setStocks(entity.getProduct().getStocks());
         dto.setCategoryName(entity.getProduct().getCategory().getCategoryName());
-        dto.setBasePrice(entity.getBasePrice());
-        dto.setEffectiveDate(entity.getEffectiveDate());
+
         return dto;
     }
 }
