@@ -41,7 +41,15 @@ public class ChatGPTService {
 
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", MODEL);
-            requestBody.put("input", prompt);
+
+            requestBody.put("messages", List.of(
+                    Map.of(
+                            "role", "user",
+                            "content", prompt
+                    )
+            ));
+
+            requestBody.put("temperature", 0.4);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
@@ -52,26 +60,22 @@ public class ChatGPTService {
                     String.class
             );
 
+            String raw = response.getBody();
+            log.info("RAW OPENAI: {}", raw);
+
             JsonNode root = mapper.readTree(response.getBody());
+            JsonNode content = root
+                    .path("choices")
+                    .get(0)
+                    .path("message")
+                    .path("content");
 
-            // IMPORTANT: Responses API uses "output" array
-            JsonNode output = root.get("output");
-
-            if (output == null || !output.isArray() || output.size() == 0) {
-                log.error("❌ Missing output array in OpenAI response");
-                return "";
-            }
-
-            JsonNode first = output.get(0);
-
-            // MUST BE: type=output_text, text=<generated text>
-            if (!first.has("text")) {
+            if (content.isMissingNode()) {
                 log.error("❌ Missing output_text");
                 return "";
             }
 
-            return first.get("text").asText();
-
+            return content.asText();
         } catch (Exception e) {
             log.error("❌ OpenAI Error: {}", e.getMessage());
             return "";
