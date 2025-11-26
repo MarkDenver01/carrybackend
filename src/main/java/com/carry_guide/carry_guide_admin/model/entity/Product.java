@@ -1,6 +1,7 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -66,6 +67,7 @@ public class Product {
     // 🟢 Category Relationship
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({"product"})
     private ProductCategory category;
 
     // 🟢 Prices Relationship (One product → many prices)
