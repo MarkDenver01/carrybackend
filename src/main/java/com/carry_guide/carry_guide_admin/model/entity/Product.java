@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,4 +77,13 @@ public class Product {
     // 🟢 Recommendation Rules (One product → many rules where this product is the base)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecommendationRule> recommendationRules = new ArrayList<>();
+
+    @Transient
+    public BigDecimal getLatestPrice() {
+        return productPrices.stream()
+                .sorted((a, b) -> b.getEffectiveDate().compareTo(a.getEffectiveDate()))
+                .findFirst()
+                .map(pp -> BigDecimal.valueOf(pp.getBasePrice()))
+                .orElse(BigDecimal.ZERO);
+    }
 }

@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -50,6 +51,9 @@ public class Customer {
             timezone = "Asia/Manila" // or GMT+8
     )
     private LocalDateTime createdDate;
+
+    @Column(nullable = false)
+    private BigDecimal walletBalance = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status", length = 20)
