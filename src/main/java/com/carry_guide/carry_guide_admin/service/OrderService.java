@@ -112,7 +112,7 @@ public class OrderService {
 
     @Transactional
     public List<OrderResponse> getOrdersForCustomer(Long customerId) {
-        return orderRepository.findByCustomer_IdOrderByCreatedAtDesc(customerId)
+        return orderRepository.findByCustomer_CustomerIdOrderByCreatedAtDesc(customerId)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
