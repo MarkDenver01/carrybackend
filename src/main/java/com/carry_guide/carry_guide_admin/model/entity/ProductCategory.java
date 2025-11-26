@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -31,7 +32,7 @@ public class ProductCategory {
     @Column(name = "category_description")
     private String categoryDescription;
 
-    @JsonIgnoreProperties({"product"})
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Product> products = new ArrayList<>();
 }
