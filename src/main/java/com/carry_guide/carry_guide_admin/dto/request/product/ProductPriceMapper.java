@@ -13,7 +13,7 @@ public class ProductPriceMapper {
         dto.setEffectiveDate(entity.getEffectiveDate());
 
         dto.setProductName(entity.getProduct().getProductName());
-        dto.setProduceDescription(entity.getProduct().getProductDescription());
+        dto.setProductDescription(entity.getProduct().getProductDescription());
         dto.setProductCode(entity.getProduct().getProductCode());
         dto.setProductSize(entity.getProduct().getProductSize());
         dto.setProductImgUrl(entity.getProduct().getProductImgUrl());

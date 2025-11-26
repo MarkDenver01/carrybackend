@@ -26,7 +26,7 @@ public class ProductMapper {
 
         dto.setProductId(p.getProductId());
         dto.setProductName(p.getProductName());
-        dto.setProduceDescription(p.getProductDescription() != null ?
+        dto.setProductDescription(p.getProductDescription() != null ?
                 p.getProductDescription() : "");
         dto.setProductCode(p.getProductCode());
         dto.setProductSize(p.getProductSize());

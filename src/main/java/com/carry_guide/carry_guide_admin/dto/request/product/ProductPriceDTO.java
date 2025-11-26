@@ -12,7 +12,7 @@ public class ProductPriceDTO {
     private LocalDate effectiveDate;
 
     private String productName;
-    private String produceDescription;
+    private String productDescription;
     private String productCode;
     private String productSize;
     private String productImgUrl;
