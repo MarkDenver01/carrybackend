@@ -15,30 +15,37 @@ public class StaticResourceConfig implements WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(StaticResourceConfig.class);
 
+    @Value("${app.upload.folder}")
+    private String uploadFolder;
+
     @Value("${app.upload.folder.driver}")
     private String uploadFolderDriver;
 
     @Value("${app.upload.folder.customer}")
     private String uploadFolderCustomer;
 
-    @Value("${app.upload.folder}")
-    private String uploadFolder;
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // PRODUCT IMAGES
+
+        // PRODUCT (Render Compatible)
+        Path productPath = Paths.get(uploadFolder).toAbsolutePath();
+        log.info("Product Upload Path: {}", productPath);
+
         registry.addResourceHandler("/upload/product/**")
-                .addResourceLocations("file:" + uploadFolder + "/");
+                .addResourceLocations("file:" + productPath + "/");
 
-        // Convert relative path (uploads/drivers) → absolute path
-        Path driverUploadPath = Paths.get(uploadFolderDriver).toAbsolutePath();
-
-        log.info("Driver Upload Path Mapped To: {}", driverUploadPath);
+        // DRIVER
+        Path driverPath = Paths.get(uploadFolderDriver).toAbsolutePath();
+        log.info("Driver Upload Path: {}", driverPath);
 
         registry.addResourceHandler("/upload/driver/**")
-                .addResourceLocations("file:" + driverUploadPath + "/");
+                .addResourceLocations("file:" + driverPath + "/");
+
+        // CUSTOMER
+        Path customerPath = Paths.get(uploadFolderCustomer).toAbsolutePath();
+        log.info("Customer Upload Path: {}", customerPath);
 
         registry.addResourceHandler("/upload/customer/**")
-                .addResourceLocations("file:" + Paths.get(uploadFolderCustomer).toAbsolutePath() + "/");
+                .addResourceLocations("file:" + customerPath + "/");
     }
 }
