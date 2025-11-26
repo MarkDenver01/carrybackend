@@ -11,4 +11,6 @@ public interface JpaUserHistoryRepository extends JpaRepository<UserHistory, Lon
     List<UserHistory> findByCustomerId(Long customerId);
 
     boolean existsByCustomerIdAndProductKeyword(Long customerId, String productKeyword);
+
+    List<UserHistory> findByCustomerIdOrderByDateTimeDesc(Long customerId);
 }

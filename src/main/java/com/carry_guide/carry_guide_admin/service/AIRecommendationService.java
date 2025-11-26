@@ -19,31 +19,53 @@ public class AIRecommendationService {
     private final ChatGPTService chatGPTService;
 
     public List<Product> getRecommendationsForUser(Long customerId) {
-        List<UserHistory> history = userHistoryRepository.findByCustomerId(customerId);
+
+        // 1️⃣ Kunin lahat ng history, PINAKABAGO MUNA
+        List<UserHistory> history = userHistoryRepository
+                .findByCustomerIdOrderByDateTimeDesc(customerId);
 
         if (history.isEmpty()) {
+            // Walang history → default top 20 products
             return productRepository.findTop20ByOrderByProductIdDesc();
         }
 
-        // Extract unique keywords
-        String keywords = history.stream()
+        // 2️⃣ Gagamit tayo ng LinkedHashSet para:
+        //    - WALA duplications
+        //    - MAINTAIN ang INSERT ORDER (important sa "pinaka-latest una")
+        LinkedHashSet<Product> ordered = new LinkedHashSet<>();
+
+        for (UserHistory h : history) {
+            String keyword = h.getProductKeyword();
+
+            // 🔹 2.1 Match by product name (pangunahing logic)
+            List<Product> byName =
+                    productRepository.findByProductNameContainingIgnoreCase(keyword);
+            ordered.addAll(byName);
+
+            // 🔹 2.2 Optional: match by category (kung gusto mo pa rin ito)
+            List<Product> byCategory =
+                    productRepository.findByCategory_CategoryNameContainingIgnoreCase(keyword);
+            ordered.addAll(byCategory);
+        }
+
+        // 3️⃣ OPTIONAL: kung gusto mo pa rin ng AI expansion (add-on lang, hindi nauuna)
+        //    Comment out block na 'to kung ayaw mo na si ChatGPT magdagdag.
+        String allKeywords = history.stream()
                 .map(UserHistory::getProductKeyword)
                 .distinct()
                 .collect(Collectors.joining(", "));
 
-        // Ask ChatGPT for expanded recommendation keywords
-        List<String> aiKeywords = chatGPTService.getRecommendedKeywords(keywords);
-
-        Set<Product> recommendations = new HashSet<>();
+        List<String> aiKeywords = chatGPTService.getRecommendedKeywords(allKeywords);
         for (String key : aiKeywords) {
-            recommendations.addAll(productRepository.findByProductNameContainingIgnoreCase(key));
-            recommendations.addAll(productRepository.findByCategory_CategoryNameContainingIgnoreCase(key));
+            ordered.addAll(productRepository.findByProductNameContainingIgnoreCase(key));
+            ordered.addAll(productRepository.findByCategory_CategoryNameContainingIgnoreCase(key));
         }
 
-        if (recommendations.isEmpty()) {
+        // 4️⃣ Kung sakaling wala pa rin nahanap (edge case)
+        if (ordered.isEmpty()) {
             return productRepository.findTop20ByOrderByProductIdDesc();
         }
 
-        return new ArrayList<>(recommendations);
+        return new ArrayList<>(ordered); // ⬅️ ORDERED na based sa history dateTime
     }
 }
