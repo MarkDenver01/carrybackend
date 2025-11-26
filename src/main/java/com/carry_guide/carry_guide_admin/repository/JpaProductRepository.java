@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.time.LocalDateTime;
+
 
 @Repository
 public interface JpaProductRepository extends JpaRepository<Product, Long> {
@@ -84,4 +86,24 @@ public interface JpaProductRepository extends JpaRepository<Product, Long> {
         ORDER BY p.productInDate DESC
     """)
     List<Product> findNewestProducts();
+    // ❌ OUT OF STOCK (0 stocks or status 'Out of Stock')
+    @Query("""
+        SELECT COUNT(p)
+        FROM Product p
+        WHERE p.stocks <= 0
+           OR p.productStatus = 'Out of Stock'
+    """)
+    long countOutOfStock();
+
+    // ⏳ EXPIRING SOON (available + may expiry within X days)
+    @Query("""
+        SELECT COUNT(p)
+        FROM Product p
+        WHERE p.productStatus = 'Available'
+          AND p.expiryDate IS NOT NULL
+          AND p.expiryDate BETWEEN :now AND :limit
+    """)
+    long countExpiringSoon(LocalDateTime now, LocalDateTime limit);
+    long countLowStock(int threshold);
 }
+
