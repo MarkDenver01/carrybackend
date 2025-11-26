@@ -26,6 +26,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // PRODUCT IMAGES
         registry.addResourceHandler("/upload/product/**")
                 .addResourceLocations("file:" + uploadFolder + "/");
 

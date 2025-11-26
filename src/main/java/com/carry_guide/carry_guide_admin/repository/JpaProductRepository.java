@@ -9,4 +9,12 @@ import java.util.List;
 @Repository
 public interface JpaProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByProductStatus(String productStatus);
+
+    // ✅ Corrected to match Product entity field names
+    List<Product> findByProductNameContainingIgnoreCase(String keyword);
+
+    // ✅ Traverse category relationship
+    List<Product> findByCategory_CategoryNameContainingIgnoreCase(String keyword);
+
+    List<Product> findTop20ByOrderByProductIdDesc();
 }
