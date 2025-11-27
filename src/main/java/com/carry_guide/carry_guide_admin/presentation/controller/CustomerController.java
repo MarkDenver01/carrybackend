@@ -64,4 +64,19 @@ public class CustomerController {
         String url = customerService.uploadCustomerPhoto(file);
         return ResponseEntity.ok(new UploadPhotoResponse(url));
     }
+
+
+    // 👉 TOTAL CUSTOMERS (lahat ng nasa customer_info)
+    @GetMapping("/public/customers/total")
+    public ResponseEntity<Long> getTotalCustomers() {
+        long total = customerService.getTotalCustomers();
+        return ResponseEntity.ok(total);
+    }
+
+    // 👉 TOTAL ACTIVE CUSTOMERS (optional, kung need mo sa dashboard)
+    @GetMapping("/public/customers/total-active")
+    public ResponseEntity<Long> getTotalActiveCustomers() {
+        long totalActive = customerService.getTotalActiveCustomers();
+        return ResponseEntity.ok(totalActive);
+    }
 }

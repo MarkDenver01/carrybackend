@@ -157,4 +157,13 @@ public class CustomerService {
         customerRepository.deleteById(id);
     }
 
+    public long getTotalCustomers() {
+        return customerRepository.count();
+    }
+
+    // ⭐ ONLY ACTIVE CUSTOMERS (optional, if needed for dashboard)
+    public long getTotalActiveCustomers() {
+        return customerRepository.countByUserAccountStatus(AccountStatus.ACTIVATE);
+    }
+
 }

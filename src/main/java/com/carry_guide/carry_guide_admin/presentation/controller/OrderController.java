@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/user/public/api/orders")
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @RequestMapping("/user/public/api/orders")
 public class OrderController {
     private final OrderService orderService;
 
@@ -37,5 +37,10 @@ public class OrderController {
     @GetMapping("/total-sales")
     public ResponseEntity<BigDecimal> getTotalSales() {
         return ResponseEntity.ok(orderService.getTotalSales());
+    }
+
+    @GetMapping("/total-orders")
+    public ResponseEntity<Long> getTotalOrders() {
+        return ResponseEntity.ok(orderService.getTotalOrders());
     }
 }

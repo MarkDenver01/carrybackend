@@ -157,4 +157,8 @@ public class OrderService {
     public BigDecimal getTotalSales() {
         return orderRepository.getTotalSales();
     }
+
+    public long getTotalOrders() {
+        return orderRepository.count();
+    }
 }

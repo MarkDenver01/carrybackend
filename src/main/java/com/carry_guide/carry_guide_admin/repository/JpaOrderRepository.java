@@ -20,4 +20,10 @@ public interface JpaOrderRepository extends JpaRepository<Order, Long> {
         WHERE o.status = 'DELIVERED'
     """)
     BigDecimal getTotalSales();
+
+    // ⭐ TOTAL ORDERS (lahat ng nasa orders table)
+    long count();
+
+    // ⭐ OPTIONAL: Count by specific status (pending, delivered, cancelled)
+    long countByStatus(OrderStatus status);
 }

@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.repository;
 
+import com.carry_guide.carry_guide_admin.domain.enums.AccountStatus;
 import com.carry_guide.carry_guide_admin.model.entity.Customer;
 import com.carry_guide.carry_guide_admin.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +22,6 @@ public interface JpaCustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByEmail(String email);
 
     Optional<Customer> findByMobileNumber(String mobileNumber);
-
+    long countByUserAccountStatus(AccountStatus userAccountStatus);
 
 }
