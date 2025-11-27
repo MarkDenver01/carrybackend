@@ -135,4 +135,28 @@ public class WalletService {
 
         return new WalletResponse(customer.getMobileNumber(), customer.getWalletBalance().longValueExact());
     }
+
+    public WalletResponse updateWalletBalance(UpdateWalletRequest request) {
+
+        Customer customer = customerRepository.findByMobileNumber(request.getMobileNumber())
+                .orElseThrow(() -> new IllegalStateException("Customer not found"));
+
+        BigDecimal current = customer.getWalletBalance();
+        BigDecimal amount = request.getAmount();
+
+        if (request.isDeduct()) {
+            if (current.compareTo(amount) < 0) {
+                throw new IllegalStateException("Insufficient balance");
+            }
+            customer.setWalletBalance(current.subtract(amount));
+        } else {
+            customer.setWalletBalance(current.add(amount));
+        }
+
+        customerRepository.save(customer);
+
+        return new WalletResponse(customer.getMobileNumber(),
+                customer.getWalletBalance().longValueExact());
+    }
+
 }

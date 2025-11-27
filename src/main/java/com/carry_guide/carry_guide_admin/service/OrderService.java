@@ -43,7 +43,7 @@ public class OrderService {
 
         Order order = new Order();
         order.setCustomer(customer);
-        order.setStatus(OrderStatus.CONFIRMED);
+        order.setStatus(OrderStatus.PENDING);
         order.setPaymentMethod(request.getPaymentMethod());
         order.setDeliveryAddress(
                 request.getDeliveryAddress() != null ? request.getDeliveryAddress()
@@ -151,5 +151,10 @@ public class OrderService {
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses)
                 .build();
+    }
+
+    // ⭐ TOTAL SALES METHOD
+    public BigDecimal getTotalSales() {
+        return orderRepository.getTotalSales();
     }
 }

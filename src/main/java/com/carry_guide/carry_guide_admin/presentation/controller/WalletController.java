@@ -32,14 +32,20 @@ public class WalletController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ UPDATE WALLET BALANCE
+//    // ✅ UPDATE WALLET BALANCE
+//    @PostMapping("/update")
+//    public ResponseEntity<?> updateWallet(@RequestBody UpdateWalletRequest request) {
+//        try {
+//            WalletResponse response = walletService.updateWallet(request);
+//            return ResponseEntity.ok(response);
+//        } catch (IllegalStateException e) {
+//            return ResponseEntity.badRequest().body(e.getMessage());
+//        }
+//    }
+
     @PostMapping("/update")
-    public ResponseEntity<?> updateWallet(@RequestBody UpdateWalletRequest request) {
-        try {
-            WalletResponse response = walletService.updateWallet(request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<WalletResponse> updateWallet(@RequestBody UpdateWalletRequest request) {
+        return ResponseEntity.ok(walletService.updateWalletBalance(request));
     }
+
 }
