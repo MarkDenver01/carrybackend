@@ -161,4 +161,11 @@ public class OrderService {
     public long getTotalOrders() {
         return orderRepository.count();
     }
+
+    public List<OrderResponse> getAllOrders() {
+        return orderRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 }

@@ -43,4 +43,11 @@ public class OrderController {
     public ResponseEntity<Long> getTotalOrders() {
         return ResponseEntity.ok(orderService.getTotalOrders());
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        return ResponseEntity.ok(
+                orderService.getAllOrders()
+        );
+    }
 }
