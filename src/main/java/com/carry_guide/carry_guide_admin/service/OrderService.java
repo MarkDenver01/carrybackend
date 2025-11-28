@@ -1,5 +1,8 @@
 package com.carry_guide.carry_guide_admin.service;
 
+import com.carry_guide.carry_guide_admin.dto.request.cancelorder.CancelOrderRequest;
+import com.carry_guide.carry_guide_admin.dto.request.cancelorder.DeliverOrderRequest;
+
 import com.carry_guide.carry_guide_admin.domain.enums.OrderStatus;
 import com.carry_guide.carry_guide_admin.domain.enums.PaymentMethod;
 import com.carry_guide.carry_guide_admin.dto.request.CheckoutRequest;
@@ -25,6 +28,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+
 public class OrderService {
 
     private final JpaOrderRepository orderRepository;
@@ -168,4 +172,64 @@ public class OrderService {
                 .map(this::mapToResponse)
                 .toList();
     }
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, String reason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Order already cancelled");
+        }
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Cannot cancel delivered order");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+
+        String baseNote = "Cancelled";
+        if (reason != null && !reason.isBlank()) {
+            baseNote += ": " + reason.trim();
+        }
+        if (order.getNotes() == null || order.getNotes().isBlank()) {
+            order.setNotes(baseNote);
+        } else {
+            order.setNotes(order.getNotes() + " | " + baseNote);
+        }
+
+        // kung may updatedAt field ka:
+        // order.setUpdatedAt(LocalDateTime.now());
+
+        Order saved = orderRepository.save(order);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public OrderResponse markAsDelivered(Long orderId, String note) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot deliver cancelled order");
+        }
+
+        order.setStatus(OrderStatus.DELIVERED);
+
+        String baseNote = "Delivered";
+        if (note != null && !note.isBlank()) {
+            baseNote += ": " + note.trim();
+        }
+
+        if (order.getNotes() == null || order.getNotes().isBlank()) {
+            order.setNotes(baseNote);
+        } else {
+            order.setNotes(order.getNotes() + " | " + baseNote);
+        }
+
+        // kung may updatedAt field:
+        // order.setUpdatedAt(LocalDateTime.now());
+
+        Order saved = orderRepository.save(order);
+        return mapToResponse(saved);
+    }
+
 }

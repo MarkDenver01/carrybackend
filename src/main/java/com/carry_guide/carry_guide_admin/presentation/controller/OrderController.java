@@ -6,6 +6,9 @@ import com.carry_guide.carry_guide_admin.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.carry_guide.carry_guide_admin.dto.request.cancelorder.CancelOrderRequest;
+import com.carry_guide.carry_guide_admin.dto.request.cancelorder.DeliverOrderRequest;
+
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -50,4 +53,25 @@ public class OrderController {
                 orderService.getAllOrders()
         );
     }
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(
+            @PathVariable Long orderId,
+            @RequestBody CancelOrderRequest request
+    ) {
+        return ResponseEntity.ok(
+                orderService.cancelOrder(orderId, request.getReason())
+        );
+    }
+
+    @PutMapping("/{orderId}/deliver")
+    public ResponseEntity<OrderResponse> markAsDelivered(
+            @PathVariable Long orderId,
+            @RequestBody(required = false) DeliverOrderRequest request
+    ) {
+        String note = request != null ? request.getNote() : null;
+        return ResponseEntity.ok(
+                orderService.markAsDelivered(orderId, note)
+        );
+    }
+
 }
