@@ -247,5 +247,20 @@ public class OrderService {
         return mapToResponse(saved);
 
     }
+    public OrderResponse markProcessing(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED ||
+                order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Cannot set processing after cancellation or delivery");
+        }
+
+        order.setStatus(OrderStatus.PROCESSING);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order saved = orderRepository.save(order);
+        return mapToResponse(saved);
+    }
 
 }

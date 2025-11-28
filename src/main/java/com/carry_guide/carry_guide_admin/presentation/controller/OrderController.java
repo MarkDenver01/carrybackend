@@ -81,6 +81,15 @@ public class OrderController {
                 orderService.markInTransit(orderId)
         );
     }
+    @PutMapping("/{orderId}/processing")
+    public ResponseEntity<OrderResponse> markProcessing(
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(
+                orderService.markProcessing(orderId)
+        );
+    }
+
 
 
 }
