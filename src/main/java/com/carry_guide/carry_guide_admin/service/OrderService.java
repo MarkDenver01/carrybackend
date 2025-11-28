@@ -154,6 +154,9 @@ public class OrderService {
                 .notes(order.getNotes())
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses)
+
+                .riderId(order.getRider() != null ? order.getRider().getRiderId() : null)
+                .riderName(order.getRider() != null ? order.getRider().getName() : null)
                 .build();
     }
 

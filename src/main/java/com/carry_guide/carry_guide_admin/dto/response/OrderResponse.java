@@ -28,4 +28,8 @@ public class OrderResponse {
     private LocalDateTime createdAt;
 
     private List<OrderItemResponse> items;
+
+    private Long riderId;
+    private String riderName;
+
 }

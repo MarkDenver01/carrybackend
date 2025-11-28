@@ -18,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
@@ -26,6 +27,11 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
+
+    // ⭐ ADD THIS — Rider assigned to order
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id", nullable = true)
+    private Rider rider;
 
     @OneToMany(
             mappedBy = "order",
@@ -43,16 +49,16 @@ public class Order {
     private PaymentMethod paymentMethod;
 
     @Column(nullable = false)
-    private BigDecimal subtotal;        // sum of items
+    private BigDecimal subtotal;
 
     @Column(nullable = false)
-    private BigDecimal deliveryFee;     // 0 kung free
+    private BigDecimal deliveryFee;
 
     @Column(nullable = false)
-    private BigDecimal discount;        // total discount
+    private BigDecimal discount;
 
     @Column(nullable = false)
-    private BigDecimal totalAmount;     // subtotal + delivery - discount
+    private BigDecimal totalAmount;
 
     @Column(length = 255)
     private String deliveryAddress;
