@@ -29,4 +29,10 @@ public class RiderController {
     public ResponseEntity<Rider> completeDelivery(@PathVariable Long riderId) {
         return ResponseEntity.ok(riderService.completeDelivery(riderId));
     }
+    @DeleteMapping("/{riderId}")
+    public ResponseEntity<String> deleteRider(@PathVariable Long riderId) {
+        riderService.deleteRider(riderId);
+        return ResponseEntity.ok("Rider deleted");
+    }
+
 }
