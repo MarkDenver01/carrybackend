@@ -231,5 +231,21 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
     }
+    public OrderResponse markInTransit(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED ||
+                order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Cannot set in-transit after cancellation or delivery");
+        }
+
+        order.setStatus(OrderStatus.IN_TRANSIT);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order saved = orderRepository.save(order);
+        return mapToResponse(saved);
+
+    }
 
 }
