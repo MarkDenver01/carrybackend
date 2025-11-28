@@ -89,7 +89,13 @@ public class OrderController {
                 orderService.markProcessing(orderId)
         );
     }
-
+    @PutMapping("/{orderId}/assign-rider/{riderId}")
+    public ResponseEntity<OrderResponse> assignRiderToOrder(
+            @PathVariable Long orderId,
+            @PathVariable Long riderId
+    ) {
+        return ResponseEntity.ok(orderService.assignRiderToOrder(orderId, riderId));
+    }
 
 
 }

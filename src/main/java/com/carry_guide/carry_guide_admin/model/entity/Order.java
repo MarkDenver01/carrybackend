@@ -30,7 +30,7 @@ public class Order {
 
     // ⭐ ADD THIS — Rider assigned to order
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = true)
+    @JoinColumn(name = "rider_id", nullable = true)
     private Rider rider;
 
     @OneToMany(

@@ -98,11 +98,15 @@ public class RiderService {
 
         return riderRepo.save(rider);
     }
+
     public void deleteRider(Long riderId) {
         if (!riderRepo.existsById(riderId)) {
             throw new EntityNotFoundException("Rider not found");
         }
         riderRepo.deleteById(riderId);
     }
-
+    public Rider getById(Long id) {
+        return riderRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rider not found: " + id));
+    }
 }

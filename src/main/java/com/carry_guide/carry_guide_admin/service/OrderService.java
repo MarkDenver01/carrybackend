@@ -3,6 +3,7 @@ package com.carry_guide.carry_guide_admin.service;
 import com.carry_guide.carry_guide_admin.dto.request.cancelorder.CancelOrderRequest;
 import com.carry_guide.carry_guide_admin.dto.request.cancelorder.DeliverOrderRequest;
 
+import com.carry_guide.carry_guide_admin.model.entity.Rider;
 import com.carry_guide.carry_guide_admin.domain.enums.OrderStatus;
 import com.carry_guide.carry_guide_admin.domain.enums.PaymentMethod;
 import com.carry_guide.carry_guide_admin.dto.request.CheckoutRequest;
@@ -20,6 +21,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.carry_guide.carry_guide_admin.service.RiderService;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,7 +37,7 @@ public class OrderService {
     private final JpaOrderRepository orderRepository;
     private final JpaProductRepository productRepository;
     private final JpaCustomerRepository customerRepository;
-
+    private final RiderService riderService;
     @Transactional
     public OrderResponse checkout(CheckoutRequest request) {
 
@@ -206,8 +209,8 @@ public class OrderService {
         return mapToResponse(saved);
     }
 
-    @Transactional
     public OrderResponse markAsDelivered(Long orderId, String note) {
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
@@ -216,6 +219,11 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.DELIVERED);
+
+        // ⭐ UPDATE RIDER STATUS TO AVAILABLE
+        if (order.getRider() != null) {
+            riderService.completeDelivery(order.getRider().getRiderId());
+        }
 
         String baseNote = "Delivered";
         if (note != null && !note.isBlank()) {
@@ -228,28 +236,12 @@ public class OrderService {
             order.setNotes(order.getNotes() + " | " + baseNote);
         }
 
-        // kung may updatedAt field:
-        // order.setUpdatedAt(LocalDateTime.now());
-
-        Order saved = orderRepository.save(order);
-        return mapToResponse(saved);
-    }
-    public OrderResponse markInTransit(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-
-        if (order.getStatus() == OrderStatus.CANCELLED ||
-                order.getStatus() == OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Cannot set in-transit after cancellation or delivery");
-        }
-
-        order.setStatus(OrderStatus.IN_TRANSIT);
         order.setUpdatedAt(LocalDateTime.now());
 
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
-
     }
+
     public OrderResponse markProcessing(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
@@ -264,6 +256,37 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
+    }
+    public OrderResponse markInTransit(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED ||
+                order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Cannot set In Transit after cancellation or delivery");
+        }
+
+        order.setStatus(OrderStatus.IN_TRANSIT);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order saved = orderRepository.save(order);
+        return mapToResponse(saved);
+    }
+    public OrderResponse assignRiderToOrder(Long orderId, Long riderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        Rider rider = riderService.getById(riderId);
+
+        // set rider to order
+        order.setRider(rider);
+        orderRepository.save(order);
+
+        // update rider status
+        riderService.assignRider(riderId);
+
+        return mapToResponse(order);
     }
 
 }
