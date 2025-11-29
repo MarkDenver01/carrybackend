@@ -160,7 +160,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/gmail/**").permitAll()
                         .requestMatchers("/api/xendit/**").permitAll()
                         .requestMatchers("/api/ewallet/**").permitAll()
-                        .requestMatchers("/api/driver/**").permitAll()
+                        .requestMatchers(
+                                "/api/driver/location",
+                                "/api/driver/*/location",
+                                "/api/driver/*/location/stream"
+                        ).permitAll()
                         .requestMatchers("/user/public/**").permitAll()
                         .requestMatchers("/upload/**").permitAll()
                         .requestMatchers("/upload/driver/**").permitAll()
