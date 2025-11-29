@@ -71,9 +71,13 @@ public class CorsConfig {
                 backendBaseUrl,
                 "https://capstone.wrapandcarry.com"
         ));
+        config.setAllowedOrigins(List.of(
+                "https://capstone.wrapandcarry.com",
+                "https://www.wrapandcarry.com"
+        ));
 
         // Required HTTP methods
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
         // Required headers
         config.setAllowedHeaders(List.of(
