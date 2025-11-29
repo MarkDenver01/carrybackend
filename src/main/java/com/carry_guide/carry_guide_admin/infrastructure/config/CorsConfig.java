@@ -69,8 +69,7 @@ public class CorsConfig {
                 reactBaseUrl,
                 androidBaseUrl,
                 backendBaseUrl,
-                "https://capstone.wrapandcarry.com",
-                "*"
+                "https://capstone.wrapandcarry.com"
         ));
 
         // Required HTTP methods

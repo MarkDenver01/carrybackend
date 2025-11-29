@@ -48,7 +48,7 @@ public class DriverLocationController {
             res.setHeader("X-Accel-Buffering", "no");
             res.setHeader("Connection", "keep-alive");
             res.setHeader("Content-Type", "text/event-stream");
-            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Origin", "https://capstone.wrapandcarry.com");
             res.setHeader("Access-Control-Allow-Credentials", "true");
         }
 
