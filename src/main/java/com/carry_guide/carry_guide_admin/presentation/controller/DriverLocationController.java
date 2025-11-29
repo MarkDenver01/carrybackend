@@ -3,10 +3,13 @@ package com.carry_guide.carry_guide_admin.presentation.controller;
 import com.carry_guide.carry_guide_admin.dto.request.tracker.DriverLocationUpdateRequest;
 import com.carry_guide.carry_guide_admin.dto.response.tracker.DriverLocation;
 import com.carry_guide.carry_guide_admin.service.DriverLocationService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
@@ -33,8 +36,35 @@ public class DriverLocationController {
     }
 
     // dashboard live stream (SSE)
-    @GetMapping(value = "/{driverId}/location/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(
+            value = "/{driverId}/location/stream",
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE
+    )
     public SseEmitter stream(@PathVariable String driverId) {
+
+        SseEmitter emitter = new SseEmitter(0L);
+
+        var reqAttr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (reqAttr != null) {
+            HttpServletResponse res = reqAttr.getResponse();
+            if (res != null) {
+                res.setHeader("Cache-Control", "no-cache");
+                res.setHeader("X-Accel-Buffering", "no");
+                res.setHeader("Connection", "keep-alive");
+                res.setHeader("Content-Type", "text/event-stream");
+                res.setHeader("Transfer-Encoding", "chunked");
+            }
+        }
+
+        // Let frontend know we're connected
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("init")
+                    .data("{\"status\":\"connected\"}")
+                    .reconnectTime(1000));
+        } catch (Exception ignored) {}
+
         return driverLocationService.subscribe(driverId);
     }
+
 }

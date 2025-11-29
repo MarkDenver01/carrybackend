@@ -63,18 +63,32 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowedOrigins(List.of(
                 backendBaseUrl,
                 reactBaseUrl,
                 androidBaseUrl
-        )); // base URLs
+        ));
+
+        // STREAMING-SAFE ORIGIN PATTERN
+        config.setAllowedOriginPatterns(List.of("*"));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // required for cookies/session
+        config.setAllowedHeaders(List.of("*", "Last-Event-ID"));
+        config.setAllowCredentials(true);
+
+        // ⭐ IMPORTANT FOR SSE
+        config.addExposedHeader("Cache-Control");
+        config.addExposedHeader("Content-Type");
+        config.addExposedHeader("X-Accel-Buffering");
+        config.addExposedHeader("Connection");
+        config.addExposedHeader("Transfer-Encoding");
+        config.setExposedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
 
