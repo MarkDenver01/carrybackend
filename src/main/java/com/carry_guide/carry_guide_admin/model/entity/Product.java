@@ -50,7 +50,8 @@ public class Product {
     private String productSize;
 
     @Column(name = "product_status")
-    private String productStatus;
+    private String productStatus = "Available";
+
 
     @NotBlank
     @Size(max = 255)

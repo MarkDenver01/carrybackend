@@ -104,6 +104,12 @@ public class ProductController extends BaseController {
     public ResponseEntity<?> getInventoryAlerts() {
         return ok(productService.getInventoryAlerts(), "Fetched inventory alerts successfully");
     }
+    @PatchMapping("/api/product/{productId}/out-of-stock")
+    public ResponseEntity<?> markProductOutOfStock(@PathVariable Long productId) {
+        ProductDTO product = productService.markProductOutOfStock(productId);
+        return ok(product, "Product marked as Out of Stock successfully");
+    }
+
 }
 
 

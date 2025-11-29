@@ -82,11 +82,16 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException("Product not found with id: " + productId));
 
-        product.setProductStatus(req.productStatus());
+        // 👉 Validate new status BEFORE saving
+        String newStatus = req.productStatus();
+        validateStatus(newStatus); // <— ADD THIS
+
+        product.setProductStatus(newStatus);
         productRepository.save(product);
 
         return mapToProductDTO(product);
     }
+
 
     /** Delete product */
     public void deleteProduct(Long productId) {
@@ -110,7 +115,12 @@ public class ProductService {
         product.setProductDescription(request.getProductDescription());
         product.setStocks(request.getStocks());
         product.setProductSize(request.getProductSize());
-        product.setProductStatus(request.getProductStatus());
+        String status = request.getProductStatus() != null
+                ? request.getProductStatus()
+                : "Available";
+
+        validateStatus(status);
+        product.setProductStatus(status);
         product.setProductImgUrl(request.getProductImgUrl());
         product.setExpiryDate(request.getExpiryDate());
         product.setProductInDate(request.getProductInDate());
@@ -135,7 +145,7 @@ public class ProductService {
                 product.getProductDescription(),
                 product.getStocks(),
                 product.getProductSize(),
-                product.getProductStatus(),
+                product.getProductStatus() != null ? product.getProductStatus() : "Available",
                 product.getProductImgUrl(),
                 product.getExpiryDate(),
                 product.getProductInDate(),
@@ -218,6 +228,34 @@ public class ProductService {
                 outOfStock,
                 expiringSoon
         );
+    }
+    public ProductDTO markProductOutOfStock(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException("Product not found with id: " + productId));
+
+        // 👉 Business rule: pag out of stock, zero-in stocks + set status
+        product.setStocks(0);
+        product.setProductStatus("Out of Stock");
+
+        productRepository.save(product);
+
+        return mapToProductDTO(product);
+    }
+    private static final List<String> ALLOWED_STATUSES = List.of(
+            "Available",
+            "For Promo",
+            "Out of Stock",
+            "Not Available"
+    );
+
+    private void validateStatus(String status) {
+        if (status == null || status.isBlank()) {
+            throw new ValidationException("Product status cannot be empty");
+        }
+
+        if (!ALLOWED_STATUSES.contains(status)) {
+            throw new ValidationException("Invalid product status: " + status);
+        }
     }
 }
 
