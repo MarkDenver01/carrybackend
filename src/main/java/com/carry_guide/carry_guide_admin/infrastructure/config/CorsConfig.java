@@ -64,31 +64,46 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-                backendBaseUrl,
+        // Allow your frontend (static domains)
+        config.setAllowedOriginPatterns(List.of(
                 reactBaseUrl,
-                androidBaseUrl
+                androidBaseUrl,
+                backendBaseUrl,
+                "https://capstone.wrapandcarry.com",
+                "*"
         ));
 
-        // STREAMING-SAFE ORIGIN PATTERN
-        config.setAllowedOriginPatterns(List.of("*"));
-
+        // Required HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*", "Last-Event-ID"));
+
+        // Required headers
+        config.setAllowedHeaders(List.of(
+                "*",
+                "Last-Event-ID",
+                "Cache-Control",
+                "Content-Type"
+        ));
+
+        // Must be true for cookies + SSE
         config.setAllowCredentials(true);
 
-        // ⭐ IMPORTANT FOR SSE
-        config.addExposedHeader("Cache-Control");
-        config.addExposedHeader("Content-Type");
-        config.addExposedHeader("X-Accel-Buffering");
-        config.addExposedHeader("Connection");
-        config.addExposedHeader("Transfer-Encoding");
-        config.setExposedHeaders(List.of("*"));
+        // Required for SSE
+        config.setExposedHeaders(List.of(
+                "Cache-Control",
+                "Content-Type",
+                "X-Accel-Buffering",
+                "Connection",
+                "Transfer-Encoding",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials",
+                "Access-Control-Allow-Headers"
+        ));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 
 }
 
