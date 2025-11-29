@@ -1,8 +1,7 @@
 package com.carry_guide.carry_guide_admin.dto.response.product;
 
-import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record ProductDTO(
         Long productId,
@@ -13,9 +12,14 @@ public record ProductDTO(
         String productSize,
         String productStatus,
         String productImgUrl,
+
+        // 👉 RAW ISO datetime, e.g. "2025-01-05T10:00:00"
         LocalDateTime expiryDate,
+
+        // 👉 RAW ISO din, pero JSON field name = "stockInDate" (para match sa frontend)
+        @JsonProperty("stockInDate")
         LocalDateTime productInDate,
+
         Long categoryId,
         String categoryName
-) {
-}
+) {}
