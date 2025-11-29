@@ -64,7 +64,7 @@ public class DriverLocationController {
                     .reconnectTime(1000));
         } catch (Exception ignored) {}
 
-        return driverLocationService.subscribe(driverId);
+        return driverLocationService.subscribe(driverId, emitter);
     }
 
 }

@@ -63,11 +63,8 @@ public class DriverLocationService {
         }
     }
 
-    public SseEmitter subscribe(String driverId) {
-        SseEmitter emitter = new SseEmitter(0L);
-
-        emitters.computeIfAbsent(driverId, id -> new CopyOnWriteArrayList<>())
-                .add(emitter);
+    public SseEmitter subscribe(String driverId, SseEmitter emitter) {
+        emitters.computeIfAbsent(driverId, id -> new CopyOnWriteArrayList<>()).add(emitter);
 
         emitter.onCompletion(() -> removeEmitter(driverId, emitter));
         emitter.onTimeout(() -> removeEmitter(driverId, emitter));
@@ -83,7 +80,8 @@ public class DriverLocationService {
                                 .data(mapper.writeValueAsString(current)) // 🔥 JSON
                                 .reconnectTime(1000)
                 );
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         return emitter;
