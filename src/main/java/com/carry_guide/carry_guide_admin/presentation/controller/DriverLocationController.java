@@ -36,35 +36,28 @@ public class DriverLocationController {
     }
 
     // dashboard live stream (SSE)
-    @GetMapping(
-            value = "/{driverId}/location/stream",
-            produces = MediaType.TEXT_EVENT_STREAM_VALUE
-    )
+    @GetMapping(value = "/{driverId}/location/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@PathVariable String driverId) {
-
         SseEmitter emitter = new SseEmitter(0L);
 
-        var reqAttr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (reqAttr != null) {
-            HttpServletResponse res = reqAttr.getResponse();
-            if (res != null) {
-                res.setHeader("Cache-Control", "no-cache");
-                res.setHeader("X-Accel-Buffering", "no");
-                res.setHeader("Connection", "keep-alive");
-                res.setHeader("Content-Type", "text/event-stream");
-                res.setHeader("Transfer-Encoding", "chunked");
-            }
+        HttpServletResponse res = ((ServletRequestAttributes) RequestContextHolder
+                .getRequestAttributes()).getResponse();
+
+        if (res != null) {
+            res.setHeader("Cache-Control", "no-cache");
+            res.setHeader("X-Accel-Buffering", "no");
+            res.setHeader("Connection", "keep-alive");
+            res.setHeader("Content-Type", "text/event-stream");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Credentials", "true");
         }
 
-        // Let frontend know we're connected
+        driverLocationService.subscribe(driverId, emitter);
+
         try {
-            emitter.send(SseEmitter.event()
-                    .name("init")
-                    .data("{\"status\":\"connected\"}")
-                    .reconnectTime(1000));
+            emitter.send(SseEmitter.event().name("init").data("connected"));
         } catch (Exception ignored) {}
 
-        return driverLocationService.subscribe(driverId, emitter);
+        return emitter; // 🔥 RETURN SAME EMITTER
     }
-
 }
