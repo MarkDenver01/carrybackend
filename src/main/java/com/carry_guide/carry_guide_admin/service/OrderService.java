@@ -258,7 +258,6 @@ public class OrderService {
         return mapToResponse(saved);
     }
     public OrderResponse markInTransit(Long orderId) {
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
@@ -267,12 +266,19 @@ public class OrderService {
             throw new IllegalStateException("Cannot set In Transit after cancellation or delivery");
         }
 
+        // 🔥 IMPORTANT: Cannot be In Transit if no assigned rider
+        if (order.getRider() == null) {
+            throw new IllegalStateException("Order cannot be set to In Transit without a rider.");
+        }
+
         order.setStatus(OrderStatus.IN_TRANSIT);
         order.setUpdatedAt(LocalDateTime.now());
 
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
     }
+
+
     public OrderResponse assignRiderToOrder(Long orderId, Long riderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
