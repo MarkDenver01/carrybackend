@@ -78,19 +78,25 @@ public class ProductService {
     }
 
     /** Update only product status */
+    /** Update only product status */
     public ProductDTO updateProductStatus(Long productId, ProductStatusUpdateRequest req) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException("Product not found with id: " + productId));
 
-        // 👉 Validate new status BEFORE saving
         String newStatus = req.productStatus();
-        validateStatus(newStatus); // <— ADD THIS
+        validateStatus(newStatus);
 
-        product.setProductStatus(newStatus);
+        // 🔥 AUTO RULE: stocks = 0 → force Out of Stock
+        if (product.getStocks() <= 0) {
+            product.setProductStatus("Out of Stock");
+        } else {
+            product.setProductStatus(newStatus);
+        }
+
         productRepository.save(product);
-
         return mapToProductDTO(product);
     }
+
 
 
     /** Delete product */
@@ -113,18 +119,30 @@ public class ProductService {
         product.setProductCode(request.getProductCode());
         product.setProductName(request.getProductName());
         product.setProductDescription(request.getProductDescription());
-        product.setStocks(request.getStocks());
-        product.setProductSize(request.getProductSize());
-        String status = request.getProductStatus() != null
-                ? request.getProductStatus()
-                : "Available";
 
-        validateStatus(status);
-        product.setProductStatus(status);
+// 🟢 Apply incoming stock
+        product.setStocks(request.getStocks());
+
+// 🟢 Auto Out of Stock rule (priority)
+        if (product.getStocks() <= 0) {
+            product.setStocks(0);
+            product.setProductStatus("Out of Stock");
+        } else {
+            // 🟢 Allow manual status only if stocks > 0
+            String status = request.getProductStatus() != null
+                    ? request.getProductStatus()
+                    : "Available";
+
+            validateStatus(status);
+            product.setProductStatus(status);
+        }
+
+        product.setProductSize(request.getProductSize());
         product.setProductImgUrl(request.getProductImgUrl());
         product.setExpiryDate(request.getExpiryDate());
         product.setProductInDate(request.getProductInDate());
         product.setCategory(category);
+
     }
 
     /** Final ProductDTO mapping (clean) */

@@ -44,9 +44,13 @@ public class OrderService {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
 
+
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
+
+
         }
+
 
         Order order = new Order();
         order.setCustomer(customer);
@@ -69,13 +73,28 @@ public class OrderService {
             Product product = productRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new EntityNotFoundException("Product not found: " + itemReq.getProductId()));
 
-            // ⭐ Get latest price from ProductPrice table
+            // ⭐ Get latest price
             BigDecimal unitPrice = product.getLatestPrice();
-
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(itemReq.getQuantity()));
 
             subtotal = subtotal.add(lineTotal);
 
+            // 🔥 DEDUCT STOCKS HERE
+            int newStock = product.getStocks() - itemReq.getQuantity();
+
+            if (newStock <= 0) {
+                product.setStocks(0);
+                product.setProductStatus("Out of Stock");  // forced
+            } else {
+                product.setStocks(newStock);
+                // DO NOT TOUCH STATUS — keep whatever it originally was
+            }
+
+
+            // 🔥 SAVE UPDATED PRODUCT STOCK
+            productRepository.save(product);
+
+            // Save order item
             OrderItem item = OrderItem.builder()
                     .order(order)
                     .product(product)
@@ -86,6 +105,7 @@ public class OrderService {
 
             orderItems.add(item);
         }
+
 
         order.setItems(orderItems);
         order.setSubtotal(subtotal);
@@ -105,6 +125,7 @@ public class OrderService {
             if (customer.getWalletBalance().compareTo(total) < 0) {
                 throw new IllegalStateException("Insufficient wallet balance");
             }
+
 
             customer.setWalletBalance(customer.getWalletBalance().subtract(total));
             customerRepository.save(customer);
