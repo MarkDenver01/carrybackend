@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Repository
 public interface JpaOrderRepository extends JpaRepository<Order, Long> {
@@ -26,4 +27,22 @@ public interface JpaOrderRepository extends JpaRepository<Order, Long> {
 
     // ⭐ OPTIONAL: Count by specific status (pending, delivered, cancelled)
     long countByStatus(OrderStatus status);
+    @Query("""
+        SELECT o.customer.customerId, COUNT(o)
+        FROM Order o
+        GROUP BY o.customer.customerId
+    """)
+    List<Object[]> countOrdersPerCustomer();
+
+    // Active customers per month
+    @Query("""
+        SELECT FUNCTION('DATE_TRUNC','month', o.createdAt) AS month,
+               COUNT(DISTINCT o.customer.customerId)
+        FROM Order o
+        WHERE o.createdAt IS NOT NULL
+        GROUP BY FUNCTION('DATE_TRUNC','month', o.createdAt)
+        ORDER BY FUNCTION('DATE_TRUNC','month', o.createdAt)
+    """)
+    List<Object[]> countActiveCustomersPerMonth();
 }
+
