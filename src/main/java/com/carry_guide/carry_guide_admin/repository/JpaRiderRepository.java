@@ -9,4 +9,6 @@ import java.util.List;
 public interface JpaRiderRepository extends JpaRepository<Rider, Long> {
 
     List<Rider> findByStatus(RiderStatus status);
+    long countByStatus(RiderStatus status);
+
 }
