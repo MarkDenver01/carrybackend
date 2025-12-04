@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/admin/api/dashboard")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class DashboardController {
