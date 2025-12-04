@@ -109,7 +109,7 @@ public interface JpaProductRepository extends JpaRepository<Product, Long> {
         SELECT COUNT(p)
         FROM Product p
         WHERE p.expiryDate IS NOT NULL
-          AND p.expiryDate BETWEEN :now AND :limit
+          AND DATE(p.expiryDate) BETWEEN DATE(:now) AND DATE(:limit)
     """)
     long countExpiringSoon(
             @Param("now") LocalDateTime now,

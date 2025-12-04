@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +23,8 @@ public class InventoryServiceImpl implements InventoryService {
         long lowStock = productRepository.countLowStock();
         long outOfStock = productRepository.countOutOfStock();
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime limit = now.plusDays(10);
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Manila"));
+        LocalDateTime limit = now.plusDays(60);
 
         long expiringSoon = productRepository.countExpiringSoon(now, limit);
 
