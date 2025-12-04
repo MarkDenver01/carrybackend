@@ -19,7 +19,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         int lowStockThreshold = 10;
 
-        long lowStock = productRepository.countLowStock(lowStockThreshold);
+        long lowStock = productRepository.countLowStock();
         long outOfStock = productRepository.countOutOfStock();
 
         LocalDateTime now = LocalDateTime.now();

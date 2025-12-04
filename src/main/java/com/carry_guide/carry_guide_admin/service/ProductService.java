@@ -196,7 +196,7 @@ public class ProductService {
 
         for (Product p : products) {
             if (p.getExpiryDate() == null) {
-                // skip products without expiry date
+
                 continue;
             }
 
@@ -230,14 +230,11 @@ public class ProductService {
     }
     public InventoryAlertDTO getInventoryAlerts() {
 
-        int LOW_STOCK_THRESHOLD = 10;
-        int EXPIRING_SOON_DAYS = 7;
-
-        long lowStock = productRepository.countLowStock(LOW_STOCK_THRESHOLD);
+        long lowStock = productRepository.countLowStock();
         long outOfStock = productRepository.countOutOfStock();
 
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Manila"));
-        LocalDateTime limit = now.plusDays(EXPIRING_SOON_DAYS);
+        LocalDateTime limit = now.plusDays(60); // ✔ correct 1–60 days
 
         long expiringSoon = productRepository.countExpiringSoon(now, limit);
 

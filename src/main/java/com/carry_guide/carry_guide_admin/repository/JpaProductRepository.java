@@ -56,7 +56,6 @@ public interface JpaProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByProductIds(List<Long> ids);
 
 
-    // 🔹 Search for products using GPT keyword list
     @Query("""
         SELECT p
         FROM Product p
@@ -88,21 +87,32 @@ public interface JpaProductRepository extends JpaRepository<Product, Long> {
     """)
     List<Product> findNewestProducts();
     // ❌ OUT OF STOCK (0 stocks or status 'Out of Stock')
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.stocks <= 0 OR p.productStatus = 'OUT_OF_STOCK'")
+    // OUT OF STOCK
+    @Query("""
+        SELECT COUNT(p)
+        FROM Product p
+        WHERE p.stocks = 0
+           OR LOWER(p.productStatus) = 'out of stock'
+    """)
     long countOutOfStock();
 
-    // ⏳ EXPIRING SOON (expiry range)
-    @Query("SELECT COUNT(p) FROM Product p " +
-            "WHERE p.productStatus = 'Available' " +
-            "AND p.expiryDate IS NOT NULL " +
-            "AND p.expiryDate BETWEEN :now AND :limit")
+    // LOW STOCK (1–60)
+    @Query("""
+        SELECT COUNT(p)
+        FROM Product p
+        WHERE p.stocks BETWEEN 1 AND 60
+    """)
+    long countLowStock();
+
+    // EXPIRING SOON — 1 to 60 days left
+    @Query("""
+        SELECT COUNT(p)
+        FROM Product p
+        WHERE p.expiryDate IS NOT NULL
+          AND p.expiryDate BETWEEN :now AND :limit
+    """)
     long countExpiringSoon(
             @Param("now") LocalDateTime now,
             @Param("limit") LocalDateTime limit
     );
-
-    // 📉 LOW STOCK
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.stocks <= :threshold")
-    long countLowStock(@Param("threshold") int threshold);
 }
-
