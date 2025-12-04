@@ -30,57 +30,57 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SocialAuthenticationHandler extends SavedRequestAwareAuthenticationSuccessHandler {
 
-    @Autowired
     private final UserService userService;
-
-    @Autowired
     private final JwtUtils jwtUtils;
+    private final JpaRoleRepository roleRepository;
 
     @Value("${base.url.backend}")
     private String baseUrl;
 
     String email;
     String idAttributeKey;
-    @Autowired
-    private JpaRoleRepository roleRepository;
-
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
-                                        Authentication authentication) throws ServletException, IOException {
+                                        Authentication authentication)
+            throws ServletException, IOException {
+
         OAuth2AuthenticationToken authToken = (OAuth2AuthenticationToken) authentication;
+
         if ("google".equals(authToken.getAuthorizedClientRegistrationId())) {
+
             DefaultOAuth2User principal = (DefaultOAuth2User) authToken.getPrincipal();
             Map<String, Object> attributes = principal.getAttributes();
+
             String email = attributes.getOrDefault("email", "").toString();
-            String name = attributes.getOrDefault("name", "").toString();
+            String name  = attributes.getOrDefault("name", "").toString();
+
             this.email = email;
             this.idAttributeKey = "id";
 
-            userService
-                    .findByEmail(email)
-                    .ifPresentOrElse(user -> {
-                        Authentication securityAuth = getAuthentication(user, attributes, authToken);
-                        SecurityContextHolder.getContext().setAuthentication(securityAuth);
-                    }, () -> {
-                        User newUser = new User();
-                        Optional<Role> userRole = roleRepository.findRoleByRoleState(RoleState.CUSTOMER); // fetch existing user
-                        if (userRole.isPresent()) {
-                            newUser.setRole(userRole.get());
-                        } else {
-                            // handle the case where the role is not found
-                            throw new RuntimeException("Role not found");
-                        }
-                        newUser.setEmail(email);
-                        newUser.setUserName(name);
-                        newUser.setSignupMethod(authToken.getAuthorizedClientRegistrationId());
-                        //userService.registerUser(newUser);
-                        // TODO REGISTER NEW USER
+            userService.findByEmail(email).ifPresentOrElse(user -> {
 
-                        Authentication securityAuth = getAuthentication(newUser, attributes, authToken);
-                        SecurityContextHolder.getContext().setAuthentication(securityAuth);
-                    });
+                Authentication securityAuth =
+                        getAuthentication(user, attributes, authToken);
+                SecurityContextHolder.getContext().setAuthentication(securityAuth);
+
+            }, () -> {
+
+                User newUser = new User();
+                newUser.setUserName(name);
+                newUser.setEmail(email);
+                newUser.setSignupMethod(authToken.getAuthorizedClientRegistrationId());
+
+                Role role = roleRepository.findRoleByRoleState(RoleState.CUSTOMER)
+                        .orElseThrow(() -> new RuntimeException("Role not found"));
+
+                newUser.setRole(role);
+
+                Authentication securityAuth =
+                        getAuthentication(newUser, attributes, authToken);
+                SecurityContextHolder.getContext().setAuthentication(securityAuth);
+            });
         }
         setAlwaysUseDefaultTargetUrl(true);
 
