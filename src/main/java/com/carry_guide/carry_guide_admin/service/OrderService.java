@@ -3,6 +3,7 @@ package com.carry_guide.carry_guide_admin.service;
 import com.carry_guide.carry_guide_admin.dto.request.cancelorder.CancelOrderRequest;
 import com.carry_guide.carry_guide_admin.dto.request.cancelorder.DeliverOrderRequest;
 
+import com.carry_guide.carry_guide_admin.service.MembershipService;
 import com.carry_guide.carry_guide_admin.model.entity.Rider;
 import com.carry_guide.carry_guide_admin.domain.enums.OrderStatus;
 import com.carry_guide.carry_guide_admin.domain.enums.PaymentMethod;
@@ -38,6 +39,8 @@ public class OrderService {
     private final JpaProductRepository productRepository;
     private final JpaCustomerRepository customerRepository;
     private final RiderService riderService;
+    private final MembershipService membershipService;
+
     @Transactional
     public OrderResponse checkout(CheckoutRequest request) {
 
@@ -259,9 +262,27 @@ public class OrderService {
 
         order.setUpdatedAt(LocalDateTime.now());
 
+        // ⭐⭐⭐ ADD POINTS HERE (BEST PLACE)
+        try {
+            int pointsToAdd = order.getTotalAmount()
+                    .divide(new BigDecimal("10"))   // 1 point per ₱10
+                    .intValue();
+
+            if (pointsToAdd > 0) {
+                membershipService.addPointsForCustomer(
+                        order.getCustomer().getCustomerId(),
+                        pointsToAdd
+                );
+            }
+
+        } catch (Exception e) {
+            System.out.println("⚠ Failed to add points: " + e.getMessage());
+        }
+
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
     }
+
 
     public OrderResponse markProcessing(Long orderId) {
         Order order = orderRepository.findById(orderId)
