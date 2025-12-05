@@ -345,6 +345,65 @@ public class ChatGPTService {
         }
     }
 
+    public List<Long> rankProductsForSearch(String query, List<Product> candidates) {
+
+        if (query == null || query.isBlank() || candidates.isEmpty()) {
+            return List.of();
+        }
+
+        try {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("query", query);
+
+            payload.put("products", candidates.stream()
+                    .map(p -> Map.of(
+                            "productId", p.getProductId(),
+                            "productName", p.getProductName(),
+                            "description", p.getProductDescription()
+                    ))
+                    .toList()
+            );
+
+            String jsonPayload = mapper.writeValueAsString(payload);
+
+            String prompt = """
+            You are an AI search engine for a grocery store.
+
+            TASK:
+            Rank the candidate products by how relevant they are to the user's search query.
+            
+            RELEVANCE RULES:
+            - Consider semantic meaning, not just keyword matching.
+            - Consider typical grocery relationships.
+            - Products with stronger meaning match go first.
+            - Do NOT invent new products.
+
+            Return ONLY JSON:
+            { "rank": [11, 22, 33] }
+
+            Data:
+            %s
+        """.formatted(jsonPayload);
+
+            String raw = callOpenAi(prompt, 0.3);
+            if (raw == null || raw.isBlank()) return List.of();
+
+            String jsonOnly = extractJsonObject(raw);
+
+            Map<?, ?> parsed = mapper.readValue(jsonOnly, Map.class);
+
+            Object arr = parsed.get("rank");
+            if (arr == null) return List.of();
+
+            return extractLongList(arr);
+
+        } catch (Exception e) {
+            log.error("❌ AI search ranking failed: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+
 
     /* ============================================================
        🔧 Helper: Extract JSON object from raw text
@@ -378,4 +437,6 @@ public class ChatGPTService {
         }
         return out;
     }
+
+
 }

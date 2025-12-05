@@ -127,54 +127,64 @@ public class ProductRecommendationController {
     @GetMapping("/search")
     public List<ProductPriceDTO> aiSmartSearch(@RequestParam String query) {
 
-        if (query == null || query.isBlank()) {
-            return List.of();
-        }
-
+        if (query == null || query.isBlank()) return List.of();
         String q = query.trim().toLowerCase();
 
-        // Fetch active products only
         List<Product> allActive = productRepository.findAllActiveProducts();
 
-        // 🔹 Step 1 — EXACT MATCHES (User typed "milk", return "Fresh Milk")
-        List<Product> exactMatches = new ArrayList<>(
-                allActive.stream()
-                        .filter(p -> p.getProductName().toLowerCase().contains(q))
-                        .toList()
-        );
+        // --- 1) Exact simple matches ---
+        List<Product> exact = allActive.stream()
+                .filter(p -> p.getProductName().toLowerCase().contains(q))
+                .toList();
 
-        // 🔹 Step 2 — GPT expands query ("veggies" → vegetables, carrots, lettuce…)
-        List<String> expandedKeywords = gpt.getRecommendedKeywords(query);
+        // --- 2) Expand query with GPT keywords ---
+        List<String> expanded = gpt.getRecommendedKeywords(query);
 
-        // 🔹 Step 3 — GPT fuzzy match (Optional fallback)
-        List<Product> expandedMatches = new ArrayList<>(
-                allActive.stream()
-                        .filter(p -> containsKeyword(p, expandedKeywords))
-                        .toList()
-        );
+        List<Product> expandedMatches = allActive.stream()
+                .filter(p -> containsKeyword(p, expanded))
+                .toList();
 
-        // 🔹 Step 4 — Merge results (avoid duplicates)
+        // --- 3) Merge + dedupe ---
         Set<Long> seen = new HashSet<>();
         List<Product> merged = new ArrayList<>();
 
-        for (Product p : exactMatches) {
-            if (seen.add(p.getProductId())) merged.add(p);
-        }
-        for (Product p : expandedMatches) {
-            if (seen.add(p.getProductId())) merged.add(p);
-        }
+        for (Product p : exact) if (seen.add(p.getProductId())) merged.add(p);
+        for (Product p : expandedMatches) if (seen.add(p.getProductId())) merged.add(p);
 
-        // 🔹 Step 5 — If no AI match, fallback to basic contains()
+        // fallback basic search
         if (merged.isEmpty()) {
-            merged = new ArrayList<>(
-                    allActive.stream()
-                            .filter(p -> p.getProductName().toLowerCase().contains(q)
-                                    || p.getProductDescription().toLowerCase().contains(q))
-                            .toList()
-            );
+            merged = allActive.stream()
+                    .filter(p -> p.getProductName().toLowerCase().contains(q))
+                    .toList();
         }
 
-        // 🔹 Step 6 — Convert to DTO with latest price
+        if (merged.isEmpty()) return List.of();
+
+        // --- 4) AI ranking applied to merged results ---
+        List<Long> rankedIds = gpt.rankProductsForSearch(query, merged);
+
+        if (!rankedIds.isEmpty()) {
+            Map<Long, Product> map = merged.stream()
+                    .collect(Collectors.toMap(Product::getProductId, p -> p));
+
+            List<Product> sorted = new ArrayList<>();
+
+            // Follow GPT ranking
+            for (Long id : rankedIds) {
+                if (map.containsKey(id)) sorted.add(map.get(id));
+            }
+
+            // Append others if GPT didn't include them
+            for (Product p : merged) {
+                if (!rankedIds.contains(p.getProductId())) {
+                    sorted.add(p);
+                }
+            }
+
+            merged = sorted;
+        }
+
+        // --- 5) Convert to DTO with price ---
         return merged.stream()
                 .map(p -> {
                     ProductPrice price = getLatestPrice(p);
@@ -184,6 +194,7 @@ public class ProductRecommendationController {
                 .filter(Objects::nonNull)
                 .toList();
     }
+
 
     private boolean containsKeyword(Product p, List<String> keywords) {
         if (keywords == null || keywords.isEmpty()) return false;
