@@ -128,82 +128,74 @@ public class ProductRecommendationController {
     public List<ProductPriceDTO> aiSmartSearch(@RequestParam String query) {
 
         if (query == null || query.isBlank()) {
-            return List.of(); // return nothing if empty
+            return List.of();
         }
 
-        // STEP 1: expand query using GPT
-        List<String> expanded = gpt.getRecommendedKeywords(query);
+        String q = query.trim().toLowerCase();
 
-        // Add original query to ensure match
-        expanded.add(query.toLowerCase());
+        // Fetch active products only
+        List<Product> allActive = productRepository.findAllActiveProducts();
 
-        // STEP 2: get all available + in-stock products
-        List<Product> candidates = productRepository.findAllActiveProducts().stream()
-                .filter(p -> p.getStocks() > 0)
-                .toList();
-
-        // STEP 3: filter products matching any expanded term
-        List<Product> matched = candidates.stream()
-                .filter(p -> matchesProduct(p, expanded))
-                .toList();
-
-        if (matched.isEmpty()) {
-            matched = candidates; // fallback to all
-        }
-
-        // STEP 4: AI ranking (use synthetic UserHistory so GPT ranking works)
-        List<UserHistory> synthetic = List.of(
-                UserHistory.builder()
-                        .productKeyword(query)
-                        .dateTime(LocalDateTime.now())
-                        .build()
+        // 🔹 Step 1 — EXACT MATCHES (User typed "milk", return "Fresh Milk")
+        List<Product> exactMatches = new ArrayList<>(
+                allActive.stream()
+                        .filter(p -> p.getProductName().toLowerCase().contains(q))
+                        .toList()
         );
 
-        List<Long> ranking = gpt.rankProductsByHistory(synthetic, matched);
+        // 🔹 Step 2 — GPT expands query ("veggies" → vegetables, carrots, lettuce…)
+        List<String> expandedKeywords = gpt.getRecommendedKeywords(query);
 
-        // STEP 5: fetch products ordered by ranking
-        List<Product> sorted = sortByRanking(matched, ranking);
+        // 🔹 Step 3 — GPT fuzzy match (Optional fallback)
+        List<Product> expandedMatches = new ArrayList<>(
+                allActive.stream()
+                        .filter(p -> containsKeyword(p, expandedKeywords))
+                        .toList()
+        );
 
-        // STEP 6: convert to DTO
-        return sorted.stream()
+        // 🔹 Step 4 — Merge results (avoid duplicates)
+        Set<Long> seen = new HashSet<>();
+        List<Product> merged = new ArrayList<>();
+
+        for (Product p : exactMatches) {
+            if (seen.add(p.getProductId())) merged.add(p);
+        }
+        for (Product p : expandedMatches) {
+            if (seen.add(p.getProductId())) merged.add(p);
+        }
+
+        // 🔹 Step 5 — If no AI match, fallback to basic contains()
+        if (merged.isEmpty()) {
+            merged = new ArrayList<>(
+                    allActive.stream()
+                            .filter(p -> p.getProductName().toLowerCase().contains(q)
+                                    || p.getProductDescription().toLowerCase().contains(q))
+                            .toList()
+            );
+        }
+
+        // 🔹 Step 6 — Convert to DTO with latest price
+        return merged.stream()
                 .map(p -> {
                     ProductPrice price = getLatestPrice(p);
-                    return (price != null) ? productPriceMapper.toDto(price) : null;
+                    if (price == null) return null;
+                    return productPriceMapper.toDto(price);
                 })
                 .filter(Objects::nonNull)
                 .toList();
     }
 
-    private boolean matchesProduct(Product p, List<String> keywords) {
+    private boolean containsKeyword(Product p, List<String> keywords) {
+        if (keywords == null || keywords.isEmpty()) return false;
+
         String text = (p.getProductName() + " " + p.getProductDescription())
                 .toLowerCase();
 
         for (String k : keywords) {
+            if (k == null || k.isBlank()) continue;
             if (text.contains(k.toLowerCase())) return true;
         }
         return false;
-    }
-
-    private List<Product> sortByRanking(List<Product> list, List<Long> rankingIds) {
-        Map<Long, Product> map = list.stream()
-                .collect(Collectors.toMap(Product::getProductId, p -> p));
-
-        List<Product> sorted = new ArrayList<>();
-
-        for (Long id : rankingIds) {
-            if (map.containsKey(id)) {
-                sorted.add(map.get(id));
-            }
-        }
-
-        // add remaining
-        for (Product p : list) {
-            if (!sorted.contains(p)) {
-                sorted.add(p);
-            }
-        }
-
-        return sorted;
     }
 
 }
