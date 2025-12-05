@@ -47,7 +47,7 @@ public class AIRecommendationService {
             String keyword = h.getProductKeyword();
 
             // Find matches for this exact historical keyword
-            List<Product> matches = productRepo.searchLoose(keyword);
+            List<Product> matches = productRepo.searchByKeyword(keyword);
 
             for (Product p : matches) {
                 if (!historyBased.contains(p)) { // Avoid duplicates

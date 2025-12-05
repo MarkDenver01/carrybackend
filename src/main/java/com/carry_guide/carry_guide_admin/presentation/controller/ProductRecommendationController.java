@@ -132,6 +132,9 @@ public class ProductRecommendationController {
 
         List<Product> allActive = productRepository.findAllActiveProducts();
 
+        // --- 0) LOOSE SEARCH (strongest improvement) ---
+        List<Product> looseMatches = productRepository.searchLoose(q);
+
         // --- 1) Exact simple matches ---
         List<Product> exact = allActive.stream()
                 .filter(p -> p.getProductName().toLowerCase().contains(q))
@@ -148,15 +151,12 @@ public class ProductRecommendationController {
         Set<Long> seen = new HashSet<>();
         List<Product> merged = new ArrayList<>();
 
+        for (Product p : looseMatches) if (seen.add(p.getProductId())) merged.add(p);
         for (Product p : exact) if (seen.add(p.getProductId())) merged.add(p);
         for (Product p : expandedMatches) if (seen.add(p.getProductId())) merged.add(p);
 
-        // fallback basic search
-        if (merged.isEmpty()) {
-            merged = allActive.stream()
-                    .filter(p -> p.getProductName().toLowerCase().contains(q))
-                    .toList();
-        }
+        // fallback if still empty
+        if (merged.isEmpty()) merged = looseMatches;
 
         if (merged.isEmpty()) return List.of();
 
@@ -169,12 +169,12 @@ public class ProductRecommendationController {
 
             List<Product> sorted = new ArrayList<>();
 
-            // Follow GPT ranking
+            // 4a. Follow GPT ranking
             for (Long id : rankedIds) {
                 if (map.containsKey(id)) sorted.add(map.get(id));
             }
 
-            // Append others if GPT didn't include them
+            // 4b. Append unmatched items
             for (Product p : merged) {
                 if (!rankedIds.contains(p.getProductId())) {
                     sorted.add(p);
