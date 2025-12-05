@@ -4,6 +4,7 @@ import com.carry_guide.carry_guide_admin.dto.request.product.ProductPriceDTO;
 import com.carry_guide.carry_guide_admin.service.ProductPriceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -16,6 +17,11 @@ public class ProductPriceController {
     @GetMapping("/all")
     public List<ProductPriceDTO> getAll() {
         return productPriceService.getAll();
+    }
+
+    @GetMapping("/all/available")
+    public List<ProductPriceDTO> getAllAvailable() {
+        return productPriceService.getAllAvailableProducts();
     }
 
     @PostMapping("/add")

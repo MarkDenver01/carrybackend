@@ -26,6 +26,13 @@ public class ProductPriceService {
                 .toList();
     }
 
+    public List<ProductPriceDTO> getAllAvailableProducts() {
+        return productPriceRepository.findAllAvailable()
+                .stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+
     public ProductPriceDTO save(ProductPriceDTO dto) {
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
