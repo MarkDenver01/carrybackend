@@ -115,4 +115,5 @@ public interface JpaProductRepository extends JpaRepository<Product, Long> {
             @Param("now") LocalDateTime now,
             @Param("limit") LocalDateTime limit
     );
+
 }
