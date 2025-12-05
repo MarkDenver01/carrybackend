@@ -204,6 +204,7 @@ public class OrderService {
     }
     @Transactional
     public OrderResponse cancelOrder(Long orderId, String reason) {
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
@@ -214,24 +215,42 @@ public class OrderService {
             throw new IllegalStateException("Cannot cancel delivered order");
         }
 
+        // 1️⃣ RESTORE STOCKS FOR EACH ITEM
+        for (OrderItem item : order.getItems()) {
+
+            Product product = item.getProduct();
+
+            int restored = product.getStocks() + item.getQuantity();
+            product.setStocks(restored);
+
+            //  ⭐ Auto rule: if stocks > 0 and previously Out of Stock → set to Available
+            if (restored > 0 && "Out of Stock".equals(product.getProductStatus())) {
+                product.setProductStatus("Available");
+            }
+
+            productRepository.save(product);
+        }
+
+        // 2️⃣ SET ORDER STATUS TO CANCELLED
         order.setStatus(OrderStatus.CANCELLED);
 
         String baseNote = "Cancelled";
         if (reason != null && !reason.isBlank()) {
             baseNote += ": " + reason.trim();
         }
+
         if (order.getNotes() == null || order.getNotes().isBlank()) {
             order.setNotes(baseNote);
         } else {
             order.setNotes(order.getNotes() + " | " + baseNote);
         }
 
-        // kung may updatedAt field ka:
-        // order.setUpdatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
 
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
     }
+
 
     public OrderResponse markAsDelivered(Long orderId, String note) {
 
