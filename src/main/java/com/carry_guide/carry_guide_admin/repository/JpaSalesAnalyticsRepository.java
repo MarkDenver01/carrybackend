@@ -16,36 +16,39 @@ public interface JpaSalesAnalyticsRepository extends JpaRepository<OrderItem, Lo
 
     // 🔹 TOTAL SALES PER CATEGORY
     @Query("""
-        SELECT new com.carry_guide.carry_guide_admin.dto.response.analytics.CategorySalesDTO(
-            c.categoryName,
-            SUM(oi.lineTotal)
-        )
-        FROM OrderItem oi
-        JOIN oi.product p
-        JOIN p.category c
-        JOIN oi.order ord
-        WHERE ord.createdAt BETWEEN :start AND :end
-        GROUP BY c.categoryName
-        ORDER BY SUM(oi.lineTotal) DESC
-    """)
+    SELECT new com.carry_guide.carry_guide_admin.dto.response.analytics.CategorySalesDTO(
+        c.categoryName,
+        SUM(oi.lineTotal)
+    )
+    FROM OrderItem oi
+    JOIN oi.product p
+    JOIN p.category c
+    JOIN oi.order ord
+    WHERE ord.status = com.carry_guide.carry_guide_admin.domain.enums.OrderStatus.DELIVERED
+      AND ord.createdAt BETWEEN :start AND :end
+    GROUP BY c.categoryName
+    ORDER BY SUM(oi.lineTotal) DESC
+""")
     List<CategorySalesDTO> getCategorySales(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
 
+
     // 🔹 TOP SELLING PRODUCTS
     @Query("""
-        SELECT new com.carry_guide.carry_guide_admin.dto.response.analytics.ProductSalesDTO(
-            p.productName,
-            SUM(oi.lineTotal)
-        )
-        FROM OrderItem oi
-        JOIN oi.product p
-        JOIN oi.order ord
-        WHERE ord.createdAt BETWEEN :start AND :end
-        GROUP BY p.productName
-        ORDER BY SUM(oi.lineTotal) DESC
-    """)
+    SELECT new com.carry_guide.carry_guide_admin.dto.response.analytics.ProductSalesDTO(
+        p.productName,
+        SUM(oi.lineTotal)
+    )
+    FROM OrderItem oi
+    JOIN oi.product p
+    JOIN oi.order ord
+    WHERE ord.status = com.carry_guide.carry_guide_admin.domain.enums.OrderStatus.DELIVERED
+      AND ord.createdAt BETWEEN :start AND :end
+    GROUP BY p.productName
+    ORDER BY SUM(oi.lineTotal) DESC
+""")
     List<ProductSalesDTO> getProductSales(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
