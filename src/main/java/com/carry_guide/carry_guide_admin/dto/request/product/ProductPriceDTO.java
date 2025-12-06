@@ -11,7 +11,7 @@ public class ProductPriceDTO {
 
     private Double basePrice;
     private LocalDate effectiveDate;
-    private LocalDateTime expiryDate;
+    private String expiryDate;
     private String productName;
     private String productDescription;
     private String productCode;
