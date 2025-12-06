@@ -2,6 +2,7 @@ package com.carry_guide.carry_guide_admin.dto.request.product;
 
 import lombok.Data;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class ProductPriceDTO {
@@ -10,7 +11,7 @@ public class ProductPriceDTO {
 
     private Double basePrice;
     private LocalDate effectiveDate;
-
+    private LocalDateTime expiryDate;
     private String productName;
     private String productDescription;
     private String productCode;
