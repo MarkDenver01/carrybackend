@@ -58,7 +58,7 @@ public class Product {
     @Column(name = "product_img_url", nullable = false)
     private String productImgUrl;
 
-    @JsonFormat(pattern = "MMM dd, yyyy hh:mm a", timezone = "Asia/Manila")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Manila")
     @Column(name = "expiry_date")
     private LocalDateTime expiryDate;
 

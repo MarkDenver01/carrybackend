@@ -12,8 +12,9 @@ public interface JpaProductPriceRepository extends JpaRepository<ProductPrice, L
     List<ProductPrice> findByProduct_ProductId(Long productProductId);
 
     @Query("""
-        SELECT pp FROM ProductPrice pp
-        WHERE pp.product.productStatus = 'Available'
-    """)
+                SELECT pp FROM ProductPrice pp
+                JOIN FETCH pp.product p
+                WHERE p.productStatus = 'Available'
+            """)
     List<ProductPrice> findAllAvailable();
 }
