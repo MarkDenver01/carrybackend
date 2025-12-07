@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @RequestMapping("/user/public/api/orders")
+@RequestMapping("/user/public/api/orders")
 public class OrderController {
     private final OrderService orderService;
 
@@ -53,6 +53,7 @@ public class OrderController {
                 orderService.getAllOrders()
         );
     }
+
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<OrderResponse> cancelOrder(
             @PathVariable Long orderId,
@@ -73,6 +74,7 @@ public class OrderController {
                 orderService.markAsDelivered(orderId, note)
         );
     }
+
     @PutMapping("/{orderId}/in-transit")
     public ResponseEntity<OrderResponse> markInTransit(
             @PathVariable Long orderId
@@ -83,7 +85,6 @@ public class OrderController {
     }
 
 
-
     @PutMapping("/{orderId}/processing")
     public ResponseEntity<OrderResponse> markProcessing(
             @PathVariable Long orderId
@@ -92,6 +93,7 @@ public class OrderController {
                 orderService.markProcessing(orderId)
         );
     }
+
     @PutMapping("/{orderId}/assign-rider/{riderId}")
     public ResponseEntity<OrderResponse> assignRiderToOrder(
             @PathVariable Long orderId,

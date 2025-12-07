@@ -1,16 +1,13 @@
 package com.carry_guide.carry_guide_admin.service;
 
-
 import com.carry_guide.carry_guide_admin.dto.request.wallet.CashInRequest;
 import com.carry_guide.carry_guide_admin.dto.request.wallet.UpdateWalletRequest;
 import com.carry_guide.carry_guide_admin.dto.response.wallet.CashInInitResponse;
 import com.carry_guide.carry_guide_admin.dto.response.wallet.WalletResponse;
 import com.carry_guide.carry_guide_admin.dto.response.wallet.XenditInvoiceResponse;
 import com.carry_guide.carry_guide_admin.model.entity.Customer;
-import com.carry_guide.carry_guide_admin.model.entity.Wallet;
 import com.carry_guide.carry_guide_admin.model.entity.WalletTransaction;
 import com.carry_guide.carry_guide_admin.repository.JpaCustomerRepository;
-import com.carry_guide.carry_guide_admin.repository.JpaWalletRepository;
 import com.carry_guide.carry_guide_admin.repository.JpaWalletTransactionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +18,17 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 public class WalletService {
-    private final JpaWalletRepository walletRepository;
+
     private final JpaWalletTransactionRepository walletTransactionRepository;
-    private final XenditService xenditService;
     private final JpaCustomerRepository customerRepository;
+    private final XenditService xenditService;
 
-
+    /* ============================================================
+       ✅ CASH-IN (FRONTEND → XENDIT → SAVE TRANSACTION AS PENDING)
+    ============================================================ */
     @Transactional
     public CashInInitResponse initiateCashIn(CashInRequest request) {
+
         String externalId = "cashin_" + request.getMobileNumber() + "_" + System.currentTimeMillis();
 
         XenditInvoiceResponse invoice = xenditService.createGcashInvoice(
@@ -54,8 +54,12 @@ public class WalletService {
         );
     }
 
+    /* ============================================================
+       ✅ XENDIT WEBHOOK → CREDIT TO CUSTOMER WALLET (SINGLE SOURCE)
+    ============================================================ */
     @Transactional
     public void handleInvoiceWebhook(String status, String externalId, Long paidAmount) {
+
         WalletTransaction tx = walletTransactionRepository.findByExternalId(externalId)
                 .orElse(null);
 
@@ -64,6 +68,7 @@ public class WalletService {
             return;
         }
 
+        // ✅ Prevent double credit
         if ("PAID".equals(tx.getStatus())) {
             return;
         }
@@ -73,69 +78,38 @@ public class WalletService {
 
         if ("PAID".equals(status)) {
 
-            Wallet wallet = walletRepository.findByMobileNumber(tx.getMobileNumber())
-                    .orElseGet(() ->
-                            walletRepository.save(
-                                    Wallet.builder()
-                                            .mobileNumber(tx.getMobileNumber())
-                                            .balance(0L)
-                                            .build()
-                            ));
+            Customer customer = customerRepository.findByMobileNumber(tx.getMobileNumber())
+                    .orElseThrow(() -> new IllegalStateException("Customer not found for wallet credit"));
 
-            Long newBalance = wallet.getBalance() + paidAmount;
-            wallet.setBalance(newBalance);
+            BigDecimal current = customer.getWalletBalance();
+            BigDecimal paid = BigDecimal.valueOf(paidAmount);
 
-            walletRepository.save(wallet);
+            customer.setWalletBalance(current.add(paid));
+            customerRepository.save(customer);
 
-            System.out.println("💰 Wallet credited: " + tx.getMobileNumber() + " new balance: " + newBalance);
+            System.out.println("✅ WALLET CREDITED: " + tx.getMobileNumber()
+                    + " +₱" + paid + " NEW BALANCE: " + customer.getWalletBalance());
         }
     }
 
+    /* ============================================================
+       ✅ GET WALLET BALANCE (CUSTOMER TABLE SOURCE)
+    ============================================================ */
     public WalletResponse getWalletBalance(String mobileNumber) {
-        Wallet wallet = walletRepository.findByMobileNumber(mobileNumber)
-                .orElseGet(() ->
-                        walletRepository.save(
-                                Wallet.builder()
-                                        .mobileNumber(mobileNumber)
-                                        .balance(0L)
-                                        .build()
-                        ));
-
-        return new WalletResponse(wallet.getMobileNumber(), wallet.getBalance());
-    }
-
-    public WalletResponse getCustomerWalletBalance(String mobileNumber) {
 
         Customer customer = customerRepository.findByMobileNumber(mobileNumber)
                 .orElseThrow(() -> new IllegalStateException("Customer not found"));
 
-        return new WalletResponse(customer.getMobileNumber(), customer.getWalletBalance().longValueExact());
+        return new WalletResponse(
+                customer.getMobileNumber(),
+                customer.getWalletBalance().longValueExact()
+        );
     }
 
-    public WalletResponse updateWallet(UpdateWalletRequest request) {
-
-        Customer customer = customerRepository.findByMobileNumber(request.getMobileNumber())
-                .orElseThrow(() -> new IllegalStateException("Customer not found"));
-
-        BigDecimal current = customer.getWalletBalance();
-        BigDecimal amount = request.getAmount();
-
-        if (request.isDeduct()) {
-            // Check insufficient balance
-            if (current.compareTo(amount) < 0) {
-                throw new IllegalStateException("Insufficient wallet balance");
-            }
-            customer.setWalletBalance(current.subtract(amount));
-        } else {
-            // Add to wallet
-            customer.setWalletBalance(current.add(amount));
-        }
-
-        customerRepository.save(customer);
-
-        return new WalletResponse(customer.getMobileNumber(), customer.getWalletBalance().longValueExact());
-    }
-
+    /* ============================================================
+       ✅ MANUAL UPDATE / DEDUCT WALLET (ADMIN / CHECKOUT USE)
+    ============================================================ */
+    @Transactional
     public WalletResponse updateWalletBalance(UpdateWalletRequest request) {
 
         Customer customer = customerRepository.findByMobileNumber(request.getMobileNumber())
@@ -146,7 +120,7 @@ public class WalletService {
 
         if (request.isDeduct()) {
             if (current.compareTo(amount) < 0) {
-                throw new IllegalStateException("Insufficient balance");
+                throw new IllegalStateException("Insufficient wallet balance");
             }
             customer.setWalletBalance(current.subtract(amount));
         } else {
@@ -155,8 +129,9 @@ public class WalletService {
 
         customerRepository.save(customer);
 
-        return new WalletResponse(customer.getMobileNumber(),
-                customer.getWalletBalance().longValueExact());
+        return new WalletResponse(
+                customer.getMobileNumber(),
+                customer.getWalletBalance().longValueExact()
+        );
     }
-
 }
