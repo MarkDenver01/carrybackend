@@ -50,59 +50,52 @@ public class OrderService {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
 
-
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
-
-
         }
-
 
         Order order = new Order();
         order.setCustomer(customer);
         order.setStatus(OrderStatus.PENDING);
         order.setPaymentMethod(request.getPaymentMethod());
         order.setDeliveryAddress(
-                request.getDeliveryAddress() != null ? request.getDeliveryAddress()
-                        : customer.getAddress()   // default customer address
+                request.getDeliveryAddress() != null
+                        ? request.getDeliveryAddress()
+                        : customer.getAddress()
         );
         order.setNotes(request.getNotes());
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
 
         List<OrderItem> orderItems = new ArrayList<>();
-
         BigDecimal subtotal = BigDecimal.ZERO;
 
+    /* =============================
+       ✅ BUILD ORDER + DEDUCT STOCK
+    ============================== */
         for (OrderItemRequest itemReq : request.getItems()) {
 
             Product product = productRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new EntityNotFoundException("Product not found: " + itemReq.getProductId()));
 
-            // ⭐ Get latest price
-            // ✅ GET PROMO PRICE IF PRODUCT IS PART OF ACTIVE SNOWBALL
             BigDecimal unitPrice = getEffectivePrice(product);
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(itemReq.getQuantity()));
 
-
             subtotal = subtotal.add(lineTotal);
 
-            // 🔥 DEDUCT STOCKS HERE
             int newStock = product.getStocks() - itemReq.getQuantity();
 
-            if (newStock <= 0) {
-                product.setStocks(0);
-                product.setProductStatus("Out of Stock");  // forced
-            } else {
-                product.setStocks(newStock);
-                // DO NOT TOUCH STATUS — keep whatever it originally was
+            if (newStock < 0) {
+                throw new IllegalStateException("Insufficient stock for " + product.getProductName());
             }
 
+            product.setStocks(newStock);
+            if (newStock == 0) {
+                product.setProductStatus("Out of Stock");
+            }
 
-            // 🔥 SAVE UPDATED PRODUCT STOCK
             productRepository.save(product);
 
-            // Save order item
             OrderItem item = OrderItem.builder()
                     .order(order)
                     .product(product)
@@ -114,12 +107,16 @@ public class OrderService {
             orderItems.add(item);
         }
 
-
         order.setItems(orderItems);
         order.setSubtotal(subtotal);
 
-        BigDecimal deliveryFee = request.getDeliveryFee() != null ? request.getDeliveryFee() : BigDecimal.ZERO;
-        BigDecimal discount = request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO;
+        BigDecimal deliveryFee = request.getDeliveryFee() != null
+                ? request.getDeliveryFee()
+                : BigDecimal.ZERO;
+
+        BigDecimal discount = request.getDiscount() != null
+                ? request.getDiscount()
+                : BigDecimal.ZERO;
 
         BigDecimal total = subtotal.add(deliveryFee).subtract(discount);
 
@@ -127,15 +124,23 @@ public class OrderService {
         order.setDiscount(discount);
         order.setTotalAmount(total);
 
-        // ⭐ WALLET PAYMENT
+        /* =============================
+        ✅ ✅ ✅ WALLET DEDUCTION (ONCE)
+        ============================== */
         if (request.getPaymentMethod() == PaymentMethod.WALLET) {
 
-            if (customer.getWalletBalance().compareTo(total) < 0) {
+            BigDecimal walletBalance = customer.getWalletBalance();
+
+            if (walletBalance == null) {
+                throw new IllegalStateException("Wallet not initialized");
+            }
+
+            if (walletBalance.compareTo(total) < 0) {
                 throw new IllegalStateException("Insufficient wallet balance");
             }
 
-
-            customer.setWalletBalance(customer.getWalletBalance().subtract(total));
+            // ✅ DEDUCT WALLET HERE (TRANSACTION-SAFE)
+            customer.setWalletBalance(walletBalance.subtract(total));
             customerRepository.save(customer);
         }
 
@@ -143,8 +148,6 @@ public class OrderService {
 
         return mapToResponse(saved);
     }
-
-
 
     @Transactional
     public List<OrderResponse> getOrdersForCustomer(Long customerId) {
@@ -212,6 +215,7 @@ public class OrderService {
                 .map(this::mapToResponse)
                 .toList();
     }
+
     @Transactional
     public OrderResponse cancelOrder(Long orderId, String reason) {
 
@@ -328,6 +332,7 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         return mapToResponse(saved);
     }
+
     public OrderResponse markInTransit(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
@@ -365,6 +370,7 @@ public class OrderService {
 
         return mapToResponse(order);
     }
+
     // ✅ CHECK IF PRODUCT HAS ACTIVE SNOWBALL PROMO
     // ✅ CHECK IF PRODUCT HAS ACTIVE SNOWBALL PROMO (WITH EXPIRY PROTECTION)
     private BigDecimal getEffectivePrice(Product product) {
@@ -401,7 +407,6 @@ public class OrderService {
         // ✅ FALLBACK TO NORMAL PRODUCT PRICE
         return product.getLatestPrice();
     }
-
 
 
 }
