@@ -4,6 +4,8 @@ import com.carry_guide.carry_guide_admin.dto.request.cancelorder.CancelOrderRequ
 import com.carry_guide.carry_guide_admin.dto.request.cancelorder.DeliverOrderRequest;
 
 import com.carry_guide.carry_guide_admin.service.MembershipService;
+import com.carry_guide.carry_guide_admin.model.entity.SnowballPromo;
+import com.carry_guide.carry_guide_admin.repository.JpaSnowballPromoRepository;
 import com.carry_guide.carry_guide_admin.model.entity.Rider;
 import com.carry_guide.carry_guide_admin.domain.enums.OrderStatus;
 import com.carry_guide.carry_guide_admin.domain.enums.PaymentMethod;
@@ -40,6 +42,7 @@ public class OrderService {
     private final JpaCustomerRepository customerRepository;
     private final RiderService riderService;
     private final MembershipService membershipService;
+    private final JpaSnowballPromoRepository snowballPromoRepository;
 
     @Transactional
     public OrderResponse checkout(CheckoutRequest request) {
@@ -77,8 +80,10 @@ public class OrderService {
                     .orElseThrow(() -> new EntityNotFoundException("Product not found: " + itemReq.getProductId()));
 
             // ⭐ Get latest price
-            BigDecimal unitPrice = product.getLatestPrice();
+            // ✅ GET PROMO PRICE IF PRODUCT IS PART OF ACTIVE SNOWBALL
+            BigDecimal unitPrice = getEffectivePrice(product);
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(itemReq.getQuantity()));
+
 
             subtotal = subtotal.add(lineTotal);
 
@@ -360,5 +365,43 @@ public class OrderService {
 
         return mapToResponse(order);
     }
+    // ✅ CHECK IF PRODUCT HAS ACTIVE SNOWBALL PROMO
+    // ✅ CHECK IF PRODUCT HAS ACTIVE SNOWBALL PROMO (WITH EXPIRY PROTECTION)
+    private BigDecimal getEffectivePrice(Product product) {
+
+        // get all snowball promos
+        List<SnowballPromo> promos = snowballPromoRepository.findAll();
+
+        for (SnowballPromo promo : promos) {
+
+            // ✅ SKIP EXPIRED PROMOS
+            if (promo.isHasExpiry() &&
+                    promo.getExpiry() != null &&
+                    promo.getExpiry().isBefore(java.time.LocalDate.now())) {
+                continue; // laktawan ang expired promo
+            }
+
+            // ✅ check if product is part of this promo
+            boolean isIncluded = promo.getProducts().stream()
+                    .anyMatch(p -> p.getProductId().equals(product.getProductId()));
+
+            if (isIncluded) {
+
+                // ✅ SAFE FETCH PROMO PRICE
+                Double promoPrice = promo.getPromoPrices() != null
+                        ? promo.getPromoPrices().get(product.getProductId())
+                        : null;
+
+                if (promoPrice != null && promoPrice > 0) {
+                    return BigDecimal.valueOf(promoPrice); // ✅ PROMO PRICE APPLIED
+                }
+            }
+        }
+
+        // ✅ FALLBACK TO NORMAL PRODUCT PRICE
+        return product.getLatestPrice();
+    }
+
+
 
 }
