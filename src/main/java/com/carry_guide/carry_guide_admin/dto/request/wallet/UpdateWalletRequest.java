@@ -8,5 +8,5 @@ import java.math.BigDecimal;
 public class UpdateWalletRequest {
     private String mobileNumber;
     private BigDecimal amount;   // amount to add or deduct
-    private boolean isDeduct;    // true = deduct, false = add
+    private boolean deduct;    // true = deduct, false = add
 }
