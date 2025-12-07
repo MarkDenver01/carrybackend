@@ -16,7 +16,7 @@ public class OrderResponse {
     private Long customerId;
     private OrderStatus status;
     private PaymentMethod paymentMethod;
-
+    private String customerName;
     private BigDecimal subtotal;
     private BigDecimal deliveryFee;
     private BigDecimal discount;

@@ -171,6 +171,11 @@ public class OrderService {
         return OrderResponse.builder()
                 .orderId(order.getId())
                 .customerId(order.getCustomer().getCustomerId())
+                .customerName(
+                        order.getCustomer().getUserName() != null
+                                ? order.getCustomer().getUserName()
+                                : order.getCustomer().getEmail()
+                )
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
                 .subtotal(order.getSubtotal())
