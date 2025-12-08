@@ -168,6 +168,7 @@ public class SecurityConfig {
                         .requestMatchers("/upload/driver/**").permitAll()
                         .requestMatchers("/upload/product/**").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
+                        .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "SUB_ADMIN")
                         .requestMatchers("/customer/**").hasAuthority("CUSTOMER")
                         .requestMatchers("/driver/**").hasAuthority("RIDER")
