@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +44,8 @@ public class OrderService {
     private final RiderService riderService;
     private final MembershipService membershipService;
     private final JpaSnowballPromoRepository snowballPromoRepository;
+    private final FcmNotificationService fcmSender;
+    private final NotificationTokenService notificationTokenService;
 
     @Transactional
     public OrderResponse checkout(CheckoutRequest request) {
@@ -70,9 +73,9 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
 
-    /* =============================
-       ✅ BUILD ORDER + DEDUCT STOCK
-    ============================== */
+        /* =============================
+        ✅ BUILD ORDER + DEDUCT STOCK
+        ============================== */
         for (OrderItemRequest itemReq : request.getItems()) {
 
             Product product = productRepository.findById(itemReq.getProductId())
@@ -145,6 +148,30 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
+
+        // for android notification
+        notificationTokenService.getAndroidTokensForCustomer(customer.getCustomerId())
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "Payment Successful 💳",
+                        "Your payment for Order #" + saved.getId() + " was successful.",
+                        Map.of(
+                                "type", "PAYMENT_SUCCESS",
+                                "orderId", saved.getId().toString()
+                        )
+                ));
+
+        // for admin notification
+        notificationTokenService.getAdminWebTokens()
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "New Paid Order ✅",
+                        "Order #" + saved.getId() + " has been paid.",
+                        Map.of(
+                                "type", "ADMIN_PAYMENT_ALERT",
+                                "orderId", saved.getId().toString()
+                        )
+                ));
 
         return mapToResponse(saved);
     }
@@ -262,6 +289,31 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         Order saved = orderRepository.save(order);
+
+        // notify web admin from customer
+        notificationTokenService.getAdminWebTokens()
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "Order Cancelled by Customer ⚠️",
+                        "Order #" + saved.getId() + " was cancelled by the customer.",
+                        Map.of(
+                                "type", "CUSTOMER_CANCELLED",
+                                "orderId", saved.getId().toString()
+                        )
+                ));
+
+        // notify customer
+        notificationTokenService.getAndroidTokensForCustomer(order.getCustomer().getCustomerId())
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "Order Cancelled ❌",
+                        "Your order #" + order.getId() + " was cancelled by the admin.",
+                        Map.of(
+                                "type", "ORDER_CANCELLED",
+                                "orderId", order.getId().toString()
+                        )
+                ));
+
         return mapToResponse(saved);
     }
 
@@ -313,6 +365,19 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
+
+        // notify customer
+        notificationTokenService.getAndroidTokensForCustomer(order.getCustomer().getCustomerId())
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "Order Delivered 📦",
+                        "Your order #" + order.getId() + " has been delivered.",
+                        Map.of(
+                                "type", "ORDER_DELIVERED",
+                                "orderId", order.getId().toString()
+                        )
+                ));
+
         return mapToResponse(saved);
     }
 
@@ -330,6 +395,18 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         Order saved = orderRepository.save(order);
+
+        // NOTIFY CUSTOMER — ORDER ACCEPTED
+        notificationTokenService.getAndroidTokensForCustomer(order.getCustomer().getCustomerId())
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "Order Accepted ✅",
+                        "Your order #" + order.getId() + " has been accepted by the store.",
+                        Map.of(
+                                "type", "ORDER_ACCEPTED",
+                                "orderId", order.getId().toString()
+                        )
+                ));
         return mapToResponse(saved);
     }
 
@@ -351,6 +428,18 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         Order saved = orderRepository.save(order);
+
+        // notify customer
+        notificationTokenService.getAndroidTokensForCustomer(order.getCustomer().getCustomerId())
+                .forEach(t -> fcmSender.sendToToken(
+                        t.getToken(),
+                        "Rider Assigned 🚴",
+                        "Your rider is on the way for Order #" + order.getId(),
+                        Map.of(
+                                "type", "RIDER_ASSIGNED",
+                                "orderId", order.getId().toString()
+                        )
+                ));
         return mapToResponse(saved);
     }
 
@@ -367,7 +456,6 @@ public class OrderService {
 
         // update rider status
         riderService.assignRider(riderId);
-
         return mapToResponse(order);
     }
 

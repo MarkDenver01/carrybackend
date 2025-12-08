@@ -165,5 +165,4 @@ public class CustomerService {
     public long getTotalActiveCustomers() {
         return customerRepository.countByUserAccountStatus(AccountStatus.ACTIVATE);
     }
-
 }

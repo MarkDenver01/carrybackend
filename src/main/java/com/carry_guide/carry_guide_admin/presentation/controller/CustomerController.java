@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -79,4 +80,5 @@ public class CustomerController {
         long totalActive = customerService.getTotalActiveCustomers();
         return ResponseEntity.ok(totalActive);
     }
+
 }
