@@ -115,7 +115,7 @@ public class OrderController {
     }
 
     // ✅ MATCHES ANDROID: GET /user/public/api/orders/customer/{id}
-    @GetMapping("/customer/{customerId}")
+    @GetMapping("/membership/{customerId}")
     public ResponseEntity<Membership> getMyMembership(
             @PathVariable Long customerId
     ) {
@@ -124,7 +124,7 @@ public class OrderController {
     }
 
     // ✅ OPTIONAL: still fine to keep
-    @PostMapping("/customer/{customerId}/add-points")
+    @PostMapping("/membership/{customerId}/add-points")
     public ResponseEntity<Void> addPoints(
             @PathVariable Long customerId,
             @RequestParam("points") int points
