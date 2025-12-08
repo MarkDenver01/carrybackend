@@ -192,4 +192,25 @@ public class MembershipServiceImpl implements MembershipService {
                 .status(m.getStatus().name())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void usePoints(Long customerId, int pointsToUse) {
+
+        if (pointsToUse <= 0) return;
+
+        Membership membership = membershipRepository.findByCustomer_CustomerId(customerId)
+                .orElseThrow(() ->
+                        new IllegalStateException("Customer has no membership: " + customerId)
+                );
+
+        int current = membership.getPointsBalance() == null ? 0 : membership.getPointsBalance();
+
+        if (current < pointsToUse) {
+            throw new IllegalStateException("Not enough points");
+        }
+
+        membership.setPointsBalance(current - pointsToUse);
+        membershipRepository.save(membership);
+    }
 }

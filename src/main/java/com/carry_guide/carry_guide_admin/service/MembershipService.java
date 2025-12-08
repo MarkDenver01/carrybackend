@@ -15,4 +15,6 @@ public interface MembershipService {
     void refreshAllMembershipStatuses();
 
     MembershipResponse getMembershipByCustomerId(Long customerId);
+
+    void usePoints(Long customerId, int pointsToUse);
 }

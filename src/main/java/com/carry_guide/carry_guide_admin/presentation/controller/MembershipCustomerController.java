@@ -42,4 +42,13 @@ public class MembershipCustomerController {
         membershipService.addPointsForCustomer(customerId, points);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/customer/{customerId}/use-points")
+    public ResponseEntity<Void> usePoints(
+            @PathVariable Long customerId,
+            @RequestParam("points") int points
+    ) {
+        membershipService.usePoints(customerId, points);
+        return ResponseEntity.ok().build();
+    }
 }
