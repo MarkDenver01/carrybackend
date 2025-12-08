@@ -19,10 +19,17 @@ public class NotificationController {
 
     @PostMapping("/register-token")
     public ResponseEntity<?> registerToken(@RequestBody Map<String, String> body) {
+
         String token = body.get("token");
-        String platform = body.getOrDefault("platform", "WEB");
-        // optional: kung may logged-in customerId ka, i-pass mo dito
+        String platform = body.getOrDefault("platform", "WEB"); // ✅ default WEB stays
+
         Long customerId = null;
+        if ("ANDROID".equalsIgnoreCase(platform)) {
+            if (body.get("customerId") == null || body.get("customerId").isBlank()) {
+                return ResponseEntity.badRequest().body("Missing customerId for Android token");
+            }
+            customerId = Long.parseLong(body.get("customerId"));
+        }
 
         if (token == null || token.isBlank()) {
             return ResponseEntity.badRequest().body("Missing token");
