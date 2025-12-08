@@ -20,7 +20,6 @@ import java.util.List;
 @RequestMapping("/user/public/api/orders")
 public class OrderController {
     private final OrderService orderService;
-    private final MembershipService membershipService;
 
     @PostMapping("/checkout")
     public ResponseEntity<OrderResponse> checkout(@RequestBody CheckoutRequest request) {
@@ -104,33 +103,4 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(orderService.assignRiderToOrder(orderId, riderId));
     }
-
-    // ✅ MATCHES ANDROID: POST /user/public/api/orders/customer/{id}/avail
-    @PostMapping("/customer/{customerId}/avail")
-    public ResponseEntity<Membership> availMembership(
-            @PathVariable Long customerId
-    ) {
-        Membership membership = membershipService.availMembershipForCustomer(customerId);
-        return ResponseEntity.ok(membership);
-    }
-
-    // ✅ MATCHES ANDROID: GET /user/public/api/orders/customer/{id}
-    @GetMapping("/membership/{customerId}")
-    public ResponseEntity<Membership> getMyMembership(
-            @PathVariable Long customerId
-    ) {
-        Membership membership = membershipService.getMembershipByCustomerId(customerId);
-        return ResponseEntity.ok(membership);
-    }
-
-    // ✅ OPTIONAL: still fine to keep
-    @PostMapping("/membership/{customerId}/add-points")
-    public ResponseEntity<Void> addPoints(
-            @PathVariable Long customerId,
-            @RequestParam("points") int points
-    ) {
-        membershipService.addPointsForCustomer(customerId, points);
-        return ResponseEntity.ok().build();
-    }
-
 }
