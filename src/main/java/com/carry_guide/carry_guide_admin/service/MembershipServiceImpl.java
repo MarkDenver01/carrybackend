@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.service;
 
+import com.carry_guide.carry_guide_admin.dto.membership.MembershipResponse;
 import com.carry_guide.carry_guide_admin.model.enums.MembershipStatus;
 import com.carry_guide.carry_guide_admin.dto.membership.MemberRowDTO;
 import com.carry_guide.carry_guide_admin.dto.membership.MembershipDashboardResponse;
@@ -173,11 +174,22 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     @Transactional(readOnly = true)
-    public Membership getMembershipByCustomerId(Long customerId) {
+    public MembershipResponse getMembershipByCustomerId(Long customerId) {
 
-        return membershipRepository.findByCustomer_CustomerId(customerId)
+        Membership m = membershipRepository.findByCustomer_CustomerId(customerId)
                 .orElseThrow(() ->
                         new IllegalStateException("Customer has no membership: " + customerId)
                 );
+
+        return MembershipResponse.builder()
+                .membershipId(m.getMembershipId())
+                .customerId(m.getCustomer().getCustomerId())
+                .customerName(m.getCustomer().getUserName())
+                .customerPhoto(m.getCustomer().getPhotoUrl())
+                .startDate(m.getStartDate().toString())
+                .expiryDate(m.getExpiryDate().toString())
+                .pointsBalance(m.getPointsBalance())
+                .status(m.getStatus().name())
+                .build();
     }
 }

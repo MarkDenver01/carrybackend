@@ -1,5 +1,6 @@
 package com.carry_guide.carry_guide_admin.presentation.controller;
 
+import com.carry_guide.carry_guide_admin.dto.membership.MembershipResponse;
 import com.carry_guide.carry_guide_admin.model.entity.Membership;
 import com.carry_guide.carry_guide_admin.service.MembershipService;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,12 @@ public class MembershipCustomerController {
 
     // ✅ ANDROID: GET /user/public/api/membership/customer/{id}
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<Membership> getMyMembership(
+    public ResponseEntity<MembershipResponse> getMyMembership(
             @PathVariable Long customerId
     ) {
-        Membership membership = membershipService.getMembershipByCustomerId(customerId);
+        MembershipResponse membership =
+                membershipService.getMembershipByCustomerId(customerId);
+
         return ResponseEntity.ok(membership);
     }
 

@@ -1,6 +1,7 @@
 package com.carry_guide.carry_guide_admin.service;
 
 import com.carry_guide.carry_guide_admin.dto.membership.MembershipDashboardResponse;
+import com.carry_guide.carry_guide_admin.dto.membership.MembershipResponse;
 import com.carry_guide.carry_guide_admin.model.entity.Membership;
 
 public interface MembershipService {
@@ -13,5 +14,5 @@ public interface MembershipService {
 
     void refreshAllMembershipStatuses();
 
-    Membership getMembershipByCustomerId(Long customerId);
+    MembershipResponse getMembershipByCustomerId(Long customerId);
 }
