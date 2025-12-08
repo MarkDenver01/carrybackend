@@ -21,14 +21,13 @@ public class NotificationController {
     public ResponseEntity<?> registerToken(@RequestBody Map<String, String> body) {
 
         String token = body.get("token");
-        String platform = body.getOrDefault("platform", "WEB"); // ✅ default WEB stays
+        String platform = body.getOrDefault("platform", "WEB");
 
         Long customerId = null;
-        if ("ANDROID".equalsIgnoreCase(platform)) {
-            if (body.get("customerId") == null || body.get("customerId").isBlank()) {
-                return ResponseEntity.badRequest().body("Missing customerId for Android token");
-            }
+        if (body.containsKey("customerId") && body.get("customerId") != null) {
             customerId = Long.parseLong(body.get("customerId"));
+        } else if (body.containsKey("driverId") && body.get("driverId") != null) {
+            customerId = Long.parseLong(body.get("driverId"));
         }
 
         if (token == null || token.isBlank()) {
@@ -36,6 +35,7 @@ public class NotificationController {
         }
 
         notificationTokenService.saveToken(customerId, token, platform);
-        return ResponseEntity.ok("Token saved");
+
+        return ResponseEntity.ok("✅ Token saved / updated");
     }
 }
