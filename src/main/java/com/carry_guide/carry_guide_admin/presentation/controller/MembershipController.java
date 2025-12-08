@@ -19,19 +19,4 @@ public class MembershipController {
     public MembershipDashboardResponse getDashboard() {
         return membershipService.getDashboardOverview();
     }
-
-    // Called when mobile app avails membership
-    @PostMapping("/customer/{customerId}/avail")
-    public Membership availMembership(@PathVariable Long customerId) {
-        return membershipService.availMembershipForCustomer(customerId);
-    }
-
-    // Called from order completion logic (or mobile if needed)
-    @PostMapping("/customer/{customerId}/add-points")
-    public void addPoints(
-            @PathVariable Long customerId,
-            @RequestParam("points") int points
-    ) {
-        membershipService.addPointsForCustomer(customerId, points);
-    }
 }

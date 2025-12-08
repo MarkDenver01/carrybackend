@@ -170,4 +170,14 @@ public class MembershipServiceImpl implements MembershipService {
 
         membershipRepository.saveAll(memberships);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Membership getMembershipByCustomerId(Long customerId) {
+
+        return membershipRepository.findByCustomer_CustomerId(customerId)
+                .orElseThrow(() ->
+                        new IllegalStateException("Customer has no membership: " + customerId)
+                );
+    }
 }

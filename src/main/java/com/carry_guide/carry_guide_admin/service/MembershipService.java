@@ -12,4 +12,6 @@ public interface MembershipService {
     MembershipDashboardResponse getDashboardOverview();
 
     void refreshAllMembershipStatuses();
+
+    Membership getMembershipByCustomerId(Long customerId);
 }
